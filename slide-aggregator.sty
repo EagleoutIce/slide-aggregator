@@ -35,32 +35,30 @@
 
 \colorlet{slidag@comment}{white!85!black}
 \def\slidag@commentname{\textit{Notiz:}}
-\def\slidag@hknode{%
-    \protected@edef\slidag@tmp{%
-        \noexpand\node[%
-            above left=0.25cm,slidag@blob=slidag@comment,text=black,%
-            text width=8.5cm,fill opacity=0.65,text opacity=1,
-            \@nameuse{slidag@extraopts@\thepage}] (tp) at(current page.south east) %
-        {% if (hook); (present(note)) => enote
-            \noexpand\@nameuse{slidag@pagehook@\thepage}\noexpand%
-            \ifcsname slidag@pagenote@\noexpand\thepage\noexpand\endcsname%
-                \noexpand\par\noexpand\slidag@commentname\noexpand\space%
-                \noexpand\@nameuse{slidag@pagenote@\thepage}\noexpand%
-            \fi\noexpand\strut%
-        };%
-    }\slidag@tmp%
+
+\def\@slidag@hknode#1{%
+\node[above left=0.25cm,slidag@blob=slidag@comment,text=black,%
+    text width=8.5cm,fill opacity=0.65,text opacity=1,#1] (tp)
+    at (current page.south east) {% if (hook); (present(note)) => enote
+    \@nameuse{slidag@pagehook@\thepage}%
+    \ifcsname slidag@pagenote@\thepage\endcsname%
+        \par\slidag@commentname\space%
+        \@nameuse{slidag@pagenote@\thepage}%
+    \fi\strut};
 }
+
+\def\slidag@hknode{\@slidag@hknode{\@nameuse{slidag@extraopts@\thepage}}}
 
 %% headings
 %% -----------------------------------------------------------------------------
 
-\newpairofpagestyles{lidag@layout}{%
-\ihead{%
-\expandafter\ifx\expandafter!\currentbm!
-\begin{tikzpicture}[remember picture,overlay]
+% hierarchy: 'block|subblock'
+% => auto wrapping?
+
+\def\slidag@start@block{%
 \node at (current page.north east) {\hypertarget{pg:\thepage}{}\hypertarget{doc:\doc}{}};
 \node[below left=0.25cm,slidag@blob=\clr!85!black] (tp) at(current page.north east) {\thepage};% hypertarget to ensure correct position is hit
-\foreach[remember=\i as \li (initially 0)] \i in {1,...,\arabic{regsecctr}} {
+\foreach[remember=\i as \li (initially 0)] \i in {1,...,\arabic{slidag@reg@block}} {
     \ifnum\i=\curi \def\opa{\@nameuse{color@\i}} \else \def\opa{lightgray} \fi
     \ifnum\i=1
     \node[below right=0.25cm,slidag@blob=\opa] (p\i) at(current page.north west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
@@ -72,19 +70,26 @@
     \else
     \node[right=0.25cm,slidag@blob=\opa] (p\i) at (p\li.east) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
     \fi\fi\fi
-}
-\end{tikzpicture}%
-\else
-\begin{tikzpicture}[remember picture,overlay]
-  \node at (current page.north east) {\hypertarget{pg:\thepage}{}};
+}}
+
+\def\slidag@inblock{%
+\node at (current page.north east) {\hypertarget{pg:\thepage}{}};
   \node[below left=0.25cm,slidag@blob=\clr!85!black] (tp) at(current page.north east) {\thepage};
   \node[left=0.25cm,slidag@blob=\clr] at(tp.west) {\currentbm};
   \ifcsname slidag@pagehook@\thepage\endcsname\slidag@hknode
   \else\ifcsname slidag@pagenote@\thepage\endcsname\slidag@hknode\fi
-  \fi
-\end{tikzpicture}%
-\fi}
+\fi
 }
+
+\newpairofpagestyles{lidag@layout}{%
+\ihead{%
+\begin{tikzpicture}[remember picture,overlay]
+\ifx\currentbm\@empty\slidag@start@block\else
+\slidag@inblock\fi
+\end{tikzpicture}}}
+
+%% hooks
+%% -----------------------------------------------------------------------------
 
 \newcommand\pagehook[3][]{%
 \@namedef{slidag@extraopts@#2}{#1}%
@@ -103,19 +108,35 @@
     \csappto{slidag@pagenote@#2}{#3}%
 \fi
 }
+
+%% links
+%% -----------------------------------------------------------------------------
+
 \def\refslide#1{\textbf{\color{\clr}\hyperlink{pg:#1}{#1}}}
 \def\reflink#1#2{\textbf{\color{\clr}\href{#1}{#2}}}
 
-\newcounter{regsecctr}
-\def\regsec#1[#2]: #3;{%
-    \stepcounter{regsecctr}
-    \@namedef{file@\arabic{regsecctr}}{#1}
-    \@namedef{color@\arabic{regsecctr}}{sol-#2}
-    \@namedef{name@\arabic{regsecctr}}{#3}
+%% counter hooks
+%% -----------------------------------------------------------------------------
+
+\newcounter{slidag@reg@block}
+\colorlet{slidag@default@color}{black}
+
+\def\@slidag@block{\@ifnextchar[{\@@slidag@block}{\@@slidag@block[slidag@default@color]}}
+
+\def\@@slidag@block[#1]#2: #3;{%
+    \stepcounter{slidag@reg@block}%
+    \@namedef{color@\arabic{slidag@reg@block}}{#1}%
+    \@namedef{file@\arabic{slidag@reg@block}} {#2}%
+    \@namedef{name@\arabic{slidag@reg@block}} {#3}%
 }
 
+\let\blockslide\@slidag@block
+
+%% display command
+%% -----------------------------------------------------------------------------
+
 \def\displayslides{%
-\foreach \i in {1,...,\arabic{regsecctr}} {%
+\foreach \i in {1,...,\arabic{slidag@reg@block}} {%
     \def\doc{\@nameuse{file@\i}}%
     \def\tag{\@nameuse{name@\i}}%
     \def\clr{\@nameuse{color@\i}}%

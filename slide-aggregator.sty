@@ -21,14 +21,13 @@
 %% -----------------------------------------------------------------------------
 
 \tikzset{%
-    slidag@blob/.style={%
-        rectangle,rounded corners=2.75pt,%
-        fill=#1!90!white,text=white!99!#1,%
-        font=\large\sffamily\upshape\mdseries,%
-        minimum height=.66cm,minimum width=1cm,%
-        inner xsep=8pt%
-    }%
-}
+slidag@blob/.style={%
+    rectangle,rounded corners=2.75pt,%
+    fill=#1!90!white,text=white!99!#1,%
+    font=\large\sffamily\upshape\mdseries,%
+    minimum height=.66cm,minimum width=1cm,%
+    inner xsep=8pt%
+}}
 
 %% Hooknode
 %% -----------------------------------------------------------------------------
@@ -56,35 +55,41 @@
 % => auto wrapping?
 
 \def\slidag@start@block{%
-\node at (current page.north east) {\hypertarget{pg:\thepage}{}\hypertarget{doc:\doc}{}};
+\node at (current page.north east) {\hypertarget{slidag@pg:\thepage}{}\hypertarget{doc:\doc}{}};
 \node[below left=0.25cm,slidag@blob=\clr!85!black] (tp) at(current page.north east) {\thepage};% hypertarget to ensure correct position is hit
-\foreach[remember=\i as \li (initially 0)] \i in {1,...,\arabic{slidag@reg@block}} {
-    \ifnum\i=\curi \def\opa{\@nameuse{color@\i}} \else \def\opa{lightgray} \fi
-    \ifnum\i=1
-    \node[below right=0.25cm,slidag@blob=\opa] (p\i) at(current page.north west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
-    \else
-    \ifnum\i=5
-        \node[below right,yshift=-0.25cm,slidag@blob=\opa] (p\i) at (p1.south west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
-    \else\ifnum\i=8
-        \node[below right,yshift=-0.25cm,slidag@blob=\opa] (p\i) at (p5.south west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
-    \else
-    \node[right=0.25cm,slidag@blob=\opa] (p\i) at (p\li.east) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
-    \fi\fi\fi
-}}
+% \foreach[remember=\i as \li (initially 0)] \i in {1,...,\arabic{slidag@reg@block}} {
+%     \ifnum\i=\curi \def\opa{\@nameuse{color@\i}} \else \def\opa{lightgray} \fi
+%     \ifnum\i=1
+%     \node[below right=0.25cm,slidag@blob=\opa] (p\i) at(current page.north west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
+%     \else
+%     \ifnum\i=5
+%         \node[below right,yshift=-0.25cm,slidag@blob=\opa] (p\i) at (p1.south west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
+%     \else\ifnum\i=8
+%         \node[below right,yshift=-0.25cm,slidag@blob=\opa] (p\i) at (p5.south west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
+%     \else
+%     \node[right=0.25cm,slidag@blob=\opa] (p\i) at (p\li.east) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
+%     \fi\fi\fi
+%}
+}
+
+\def\slidag@@pgmarker{\node at (current page.north east) {\hypertarget{slidag@pg:\thepage}{}};}
+\def\slidag@@pgblob{\node[below left=0.25cm,slidag@blob=\clr!85!black] (tp) at(current page.north east) {\thepage};}
+
+\def\slidag@@commentblob{%
+    \ifcsname slidag@pagehook@\thepage\endcsname\slidag@hknode
+    \else\ifcsname slidag@pagenote@\thepage\endcsname\slidag@hknode\fi
+}
 
 \def\slidag@inblock{%
-\node at (current page.north east) {\hypertarget{pg:\thepage}{}};
-  \node[below left=0.25cm,slidag@blob=\clr!85!black] (tp) at(current page.north east) {\thepage};
-  \node[left=0.25cm,slidag@blob=\clr] at(tp.west) {\currentbm};
-  \ifcsname slidag@pagehook@\thepage\endcsname\slidag@hknode
-  \else\ifcsname slidag@pagenote@\thepage\endcsname\slidag@hknode\fi
-\fi
+  \slidag@@pgmarker\slidag@@pgblob
+  \node[left=0.25cm,slidag@blob=\clr] at(tp.west) {\slidag@cur@blkmark};
+  \slidag@@commentblob
 }
 
 \newpairofpagestyles{lidag@layout}{%
 \ihead{%
 \begin{tikzpicture}[remember picture,overlay]
-\ifx\currentbm\@empty\slidag@start@block\else
+\ifx\slidag@cur@blkmark\@empty\slidag@start@block\else
 \slidag@inblock\fi
 \end{tikzpicture}}}
 
@@ -112,40 +117,89 @@
 %% links
 %% -----------------------------------------------------------------------------
 
-\def\refslide#1{\textbf{\color{\clr}\hyperlink{pg:#1}{#1}}}
+\def\refslide#1{\textbf{\color{\clr}\hyperlink{slidag@pg:#1}{#1}}}
 \def\reflink#1#2{\textbf{\color{\clr}\href{#1}{#2}}}
 
 %% counter hooks
 %% -----------------------------------------------------------------------------
 
 \newcounter{slidag@reg@block}
+\newcounter{slidag@reg@subblock}
+
 \colorlet{slidag@default@color}{black}
 
-\def\@slidag@block{\@ifnextchar[{\@@slidag@block}{\@@slidag@block[slidag@default@color]}}
+% every hook will precreate its corresponding savebox
+% this should be fine
 
-\def\@@slidag@block[#1]#2: #3;{%
+\newcommand*\@slidag@block[2][slidag@default@color]{%
     \stepcounter{slidag@reg@block}%
+    \setcounter{slidag@reg@subblock}{0}%
+    \@namedef{slidag@reg@subblock@\arabic{slidag@reg@block}}{0}%
     \@namedef{color@\arabic{slidag@reg@block}}{#1}%
-    \@namedef{file@\arabic{slidag@reg@block}} {#2}%
-    \@namedef{name@\arabic{slidag@reg@block}} {#3}%
+    \@namedef{name@\arabic{slidag@reg@block}}{#2}%
+    \expandafter\newsavebox\csname slidag@s@\arabic{slidag@reg@block}\endcsname{%
+        \tikz{\path node [slidag@blob=#1] {\slidag@cur@blkmark};}%
+    }%
 }
 
-\let\blockslide\@slidag@block
+\newcommand*\@slidag@subblock[3][\@nameuse{color@\arabic{slidag@reg@block}}]{%
+    \stepcounter{slidag@reg@subblock}%
+    \expandafter\edef\csname slidag@reg@subblock@\arabic{slidag@reg@block}\endcsname{\arabic{slidag@reg@subblock}}%
+    \@namedef{color@@\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}}{#1}%
+    \@namedef{file@@\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}}{#2}%
+    \@namedef{name@@\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}}{#3}%
+}
+
+\let\slideblock\@slidag@block
+\let\addslide\@slidag@subblock
 
 %% display command
 %% -----------------------------------------------------------------------------
 
-\def\displayslides{%
-\foreach \i in {1,...,\arabic{slidag@reg@block}} {%
-    \def\doc{\@nameuse{file@\i}}%
-    \def\tag{\@nameuse{name@\i}}%
-    \def\clr{\@nameuse{color@\i}}%
-    \xdef\curi{\i}
-    \clearpage
-    \def\currentbm{}
-    \afterpage{\gdef\currentbm{\hyperlink{doc:\doc}{\i~\tag}}}
-    \pdfbookmark[0]{\i) \tag}{\doc-m}
-    \includepdf[pages=-,fitpaper,pagecommand={\thispagestyle{lidag@layout}}]{\doc.pdf}
+\def\slidag@init@block{
+    \protected@edef\blktag{\@nameuse{name@\slidag@cur@blk}}%
+    \protected@edef\blkclr{\@nameuse{color@\slidag@cur@blk}}%
+    \clearpage%
+    \let\slidag@cur@blkmark\relax%
+    \afterpage{\gdef\slidag@cur@blkmark{\hyperlink{doc:\doc}{\slidag@cur@blk~\blktag}}}%
+    \edef\slidag@cnt@sub@blk{\@nameuse{slidag@reg@subblock@\slidag@cur@blk}}%
+    \typeout{\blktag\space(\blkclr) [\slidag@cnt@sub@blk]}%
+}
+
+\def\slidag@init@subblock{
+    \protected@edef\doc{\@nameuse{file@@\slidag@cur@blk @\slidag@cur@sub@blk}}%
+    \protected@edef\clr{\@nameuse{color@@\slidag@cur@blk @\slidag@cur@sub@blk}}%
+    \protected@edef\tag{\@nameuse{name@@\slidag@cur@blk @\slidag@cur@sub@blk}}%
+    \typeout{   - \tag\space(\clr, \doc) [\slidag@cur@sub@blk/\slidag@cnt@sub@blk]}%
+    \clearpage%
+}
+
+\def\slidag@blk@prefix{\slidag@cur@blk)\space}
+\def\slidag@sub@blk@prefix{\slidag@cur@sub@blk)\space}
+
+\def\slidag@display@slides@withsubs{
+\foreach \slidag@cur@blk in {1,...,\arabic{slidag@reg@block}} {%
+    \slidag@init@block
+    \ifnum\slidag@cnt@sub@blk>0
+    \foreach \slidag@cur@sub@blk %
+            in {1,...,\slidag@cnt@sub@blk} {%
+        \slidag@init@subblock
+        % only insert bm if there is at least one slideset inside
+        \ifnum\slidag@cur@sub@blk=1\relax
+            \pdfbookmark[0]{\slidag@blk@prefix\blktag}{\doc-m}%
+        \fi
+        \pdfbookmark[1]{\slidag@sub@blk@prefix \tag}{\doc-s}%
+        % include with fixed layout
+        \includepdf[pages=-,fitpaper,pagecommand={\thispagestyle{lidag@layout}}]{\doc.pdf}
+    }%
+    \fi
 }}
+
+\def\displayslides{%
+\ifnum\value{slidag@reg@block}=0%
+    ERROR: WIP FOR NO SUPS
+\else
+\slidag@display@slides@withsubs
+\fi}
 
 \endinput

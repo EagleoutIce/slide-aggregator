@@ -14,9 +14,12 @@
 %% -----------------------------------------------------------------------------
 
 \newif\ifsag@setup@fitpage@
-\DeclareOption{fitpage}{\sag@setup@fitpage@true}
+\DeclareOption{fitpage}{\sag@setup@fitpage@true\sag@setup@auto@false}
 \DeclareOption{nofitpage}{\sag@setup@fitpage@false}
-
+% note: not compatible (auto will use it's own fitting mechanism)
+\newif\ifsag@setup@auto@
+\DeclareOption{auto}{\sag@setup@fitpage@false\sag@setup@auto@true}
+\DeclareOption{noauto}{\sag@setup@auto@false}
 \ProcessOptions*
 
 %% Packages
@@ -28,6 +31,11 @@
 
 %% Styles for markers and base registers
 %% -----------------------------------------------------------------------------
+
+\ifsag@setup@auto@
+\newlength\sag@target@w
+\newlength\sag@target@h
+\fi
 
 \def\sag@default@font{\Large\upshape\sffamily}
 \def\sag@subnode@factor{.225}
@@ -91,7 +99,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
             \ifnum\sag@tmp@i=\sag@cur@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
             \@sag@ubox[\sag@tmp]{\sag@tmp@i}\space
         \fi%
-    }%
+    }\hfill%
 }
 
 \def\sag@start@block{%
@@ -212,6 +220,14 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     \@namedef{name@@\sag@br @\sag@sr}{#3}%
     \@namedef{short@@\sag@br @\sag@sr}{#4}%
     \@sag@build@subblkblob{color@@\sag@br @\sag@sr}{#3}{#4}%
+    % Auto adaption of max :)
+    \ifsag@setup@auto@
+        \typeout{CURERNT: w:\the\sag@target@w, h:\the\sag@target@h}
+        \setbox0=\hbox{\includegraphics{#2}}%
+        \typeout{GOT: w:\the\wd0; h:\the\ht0 (#2)}
+        \ifdim\wd0>\sag@target@w \typeout{WW}\sag@target@w=\wd0\fi
+        \ifdim\ht0>\sag@target@h \typeout{HH}\sag@target@h=\ht0\fi
+    \fi
 }
 
 \let\slideblock\@sag@block
@@ -252,9 +268,11 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     % include with fixed layout
     \ifsag@setup@fitpage@
         \includepdf[pages=-,pagecommand={\thispagestyle{lidag@layout}},fitpaper]{\doc.pdf}%
+    \else\ifsag@setup@auto@
+        \includepdf[pages=-,templatesize={\sag@target@w}{\sag@target@h},pagecommand={\thispagestyle{lidag@layout}},fitpaper]{\doc.pdf}%
     \else
         \includepdf[pages=-,pagecommand={\thispagestyle{lidag@layout}}]{\doc.pdf}%
-    \fi
+    \fi\fi
 }
 
 \def\sag@display@slides@withsubs{

@@ -10,6 +10,15 @@
 
 \ProvidesPackage{slide-aggregator}[2021/02/22 v1.0 a slide aggregator package]
 
+%% Options
+%% -----------------------------------------------------------------------------
+
+\newif\ifsag@setup@fitpage@
+\DeclareOption{fitpage}{\sag@setup@fitpage@true}
+\DeclareOption{nofitpage}{\sag@setup@fitpage@false}
+
+\ProcessOptions*
+
 %% Packages
 %% -----------------------------------------------------------------------------
 
@@ -17,30 +26,38 @@
 \RequirePackage{afterpage,scrlayer-scrpage,etoolbox,bookmark,pdfpages,tikz}
 
 
-%% Styles for markers
+%% Styles for markers and base registers
 %% -----------------------------------------------------------------------------
 
 \def\sag@default@font{\Large\upshape\sffamily}
-\newlength\sag@subblock@len \sag@subblock@len=12cm
+\def\sag@subnode@factor{.225}
+\def\sag@overview@factor{.725}
+
+\newcounter{sag@reg@block} \def\sag@br{\arabic{sag@reg@block}}
+\newcounter{sag@reg@subblock} \def\sag@sr{\arabic{sag@reg@subblock}}
 
 \tikzset{%
 sag@blob/.style={%
     rectangle,rounded corners=2.75pt,%
     fill=#1!90!white,text=white,%
     font=\sag@default@font,%
-    minimum height=2em,%
+    minimum height=2.25em,%
     inner xsep=2ex%
 },%
 sag@style@layout/.style={},%
-sag@subnode/.style={below left,yshift=-.15cm,outer sep=0pt,inner sep=0pt,text width=\sag@subblock@len,align=right},%
-sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3em}%
+sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3em},%
+sag@subnode/.style={below left,yshift=-.15cm,outer sep=0pt,inner sep=0pt,text width=\sag@subnode@factor*\paperwidth,align=right},%
+sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overview@factor*\paperwidth,align=left}
 }
 
 \colorlet{sag@default@color}{black}
-\colorlet{sag@inactive@sub@color}{lightgray}
+\colorlet{sag@inactive@color}{lightgray}
 \def\sag@shadecolor#1{#1!50!white}
 
-\let\@sag@tpstyle\textbf
+\def\@sag@tpstyle#1{#1}
+\let\@sag@pgstyle\textbf
+
+\newif\if@sag@atblockinit@
 
 %% Comment-Node
 %% -----------------------------------------------------------------------------
@@ -56,7 +73,7 @@ sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3
     \ifcsname sag@pagenote@\thepage\endcsname%
         \par\sag@commentname\space%
         \@nameuse{sag@pagenote@\thepage}%
-    \fi\strut};
+    \fi};
 }
 
 \def\sag@comment@node{\@sag@comment@node{\@nameuse{sag@ceop@\thepage}}}
@@ -67,26 +84,26 @@ sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3
 % hierarchy: 'block|subblock'
 % => auto wrapping?
 
+\def\sag@typesetmainblocks{%
+    \foreach \sag@tmp@i in {1,...,\sag@br} {%
+        % only typeset if childs are present
+        \ifnum\@nameuse{sag@reg@subblock@\sag@tmp@i}>0\relax
+            \ifnum\sag@tmp@i=\sag@cur@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
+            \@sag@ubox[\sag@tmp]{\sag@tmp@i}\space
+        \fi%
+    }%
+}
+
 \def\sag@start@block{%
-% \node at (current page.north east) {\hypertarget{sag@pg:\thepage}{}\hypertarget{doc:\doc}{}};
-% \node[sag@style@pgnode] (tp) at(current page.north east) {\thepage};% hypertarget to ensure correct position is hit
-% \foreach[remember=\i as \li (initially 0)] \i in {1,...,\sag@br} {
-%     \ifnum\i=\curi \def\opa{\@nameuse{color@\i}} \else \def\opa{lightgray} \fi
-%     \ifnum\i=1
-%     \node[below right=0.25cm,sag@blob=\opa] (p\i) at(current page.north west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
-%     \else
-%     \ifnum\i=5
-%         \node[below right,yshift=-0.25cm,sag@blob=\opa] (p\i) at (p1.south west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
-%     \else\ifnum\i=8
-%         \node[below right,yshift=-0.25cm,sag@blob=\opa] (p\i) at (p5.south west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
-%     \else
-%     \node[right=0.25cm,sag@blob=\opa] (p\i) at (p\li.east) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
-%     \fi\fi\fi
-%}
+\sag@@pgmarker\sag@@pgblob% don't pull out, it may change if on hooks
+\node[sag@overviewnode] (on) at (current page.north west) {\sag@typesetmainblocks};
+
+\sag@place@subnode
+\sag@@commentblob
 }
 
 \def\sag@@pgmarker{\node at (current page.north east) {\sag@@ph\hypertarget{sag@pg:\thepage}{}};}
-\def\sag@@pgblob{\node[below left=0.25cm,sag@blob=blkclr,outer sep=0pt] (tp) at(current page.north east) {\@sag@tpstyle{\thepage}};}
+\def\sag@@pgblob{\node[below left=0.25cm,sag@blob=blkclr,outer sep=0pt] (tp) at(current page.north east) {\@sag@pgstyle{\thepage}};}
 
 \def\sag@@commentblob{%
     \ifcsname sag@pagehook@\thepage\endcsname\sag@comment@node
@@ -101,17 +118,19 @@ sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3
     }%
 }
 
+\def\sag@place@subnode{\node[sag@subnode] at (tp.south east) {\sag@typesetsubblocks};}
+
 \def\sag@inblock{%
+  \sag@@pgmarker\sag@@pgblob% don't pull out, it may change if on hooks
   \node[left=0.25cm] at(tp.west) {\expandafter\usebox\csname sag@s@\sag@cur@blk\endcsname};
-  \node[sag@subnode] at (tp.south east) {\sag@typesetsubblocks};
+  \sag@place@subnode
   \sag@@commentblob
 }
 
 \newpairofpagestyles{lidag@layout}{%
 \ihead{%
 \hfill\begin{tikzpicture}[remember picture,overlay,sag@style@layout]
-\sag@@pgmarker\sag@@pgblob
-\ifx\@sag@blockinit@\sag@true \sag@start@block \else
+\if@sag@atblockinit@ \sag@start@block \else
 \sag@inblock \fi
 \gdef\sag@@ph{}% clear so it is one applic-only
 \end{tikzpicture}}}
@@ -144,16 +163,13 @@ sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3
 %% block hooks
 %% -----------------------------------------------------------------------------
 
-\newcounter{sag@reg@block} \def\sag@br{\arabic{sag@reg@block}}
-\newcounter{sag@reg@subblock} \def\sag@sr{\arabic{sag@reg@subblock}}
-
 % every hook will precreate its corresponding savebox
 % this should be fine
 
 \def\@sag@sbox[#1]#2#3#4#5{%
     \expandafter\newsavebox\csname sag@#1@#2\endcsname
     \expandafter\savebox\csname sag@#1@#2\endcsname{%
-        \tikz{\node [sag@blob=#3,#5] {#4};}%
+        \strut\tikz[baseline]{\node [sag@blob=#3,#5] {#4};}%
     }%
 }
 
@@ -161,12 +177,12 @@ sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3
 
 \def\@sag@build@blkblob#1#2#3{%
     \@sag@sbox[s]{\sag@br}{#1}{\hyperlink{sag@blk:\sag@br}{\@sag@tpstyle{#2}}}{}%
-    \@sag@sbox[sd]{\sag@br}{\sag@shadecolor{#1}}{\hyperlink{sag@blk:\sag@br}{#3}}{}%
+    \@sag@sbox[sd]{\sag@br}{sag@inactive@color}{\hyperlink{sag@blk:\sag@br}{#3}}{}%
 }
 
 \def\@sag@build@subblkblob#1#2#3{%
     \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#2}}{text=black}%
-    \@sag@sbox[sd]{\sag@br @\sag@sr}{sag@inactive@sub@color}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#3}}{}%
+    \@sag@sbox[sd]{\sag@br @\sag@sr}{sag@inactive@color}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#3}}{}%
 }
 
 
@@ -188,7 +204,7 @@ sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3
 \newcommand*\@sag@subblock[3][color@\sag@br]{%
     \@ifnextchar[{\@sag@@subblock{#1}{#2}{#3}}{\@sag@@subblock{#1}{#2}{#3}[#3]}%
 }
-\def\@sag@@subblock#1#2#3[#4]{
+\def\@sag@@subblock#1#2#3[#4]{%
     \stepcounter{sag@reg@subblock}%
     \expandafter\edef\csname sag@reg@subblock@\sag@br\endcsname{\sag@sr}%
     \colorlet{color@@\sag@br @\sag@sr}{\sag@shadecolor{#1}}%
@@ -199,31 +215,26 @@ sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3
 }
 
 \let\slideblock\@sag@block
-
 \let\addslide\@sag@subblock
 
 %% display command
 %% -----------------------------------------------------------------------------
 
-% newif did fail in nested cache?
-\let\sag@true\@ne
-\let\sag@false\tw@
-
-\def\sag@init@block{
+\def\sag@init@block{%
     \protected@edef\blktag{\@nameuse{name@\sag@cur@blk}}%
     \colorlet{blkclr}{color@\sag@cur@blk}%
-    \let\@sag@blockinit@\sag@true%
-    \appto\sag@@ph{\global\let\@sag@blockinit@\sag@false}%
+    \@sag@atblockinit@true
+    \appto\sag@@ph{\global\@sag@atblockinit@false}%
     \edef\sag@cnt@sub@blk{\@nameuse{sag@reg@subblock@\sag@cur@blk}}%
     \typeout{\blktag\space[\sag@cnt@sub@blk]}%
 }
 
-\def\sag@init@subblock{
+\def\sag@init@subblock{%
     \protected@edef\doc{\@nameuse{file@@\sag@cur@blk @\sag@cur@sub@blk}}%
     \colorlet{clr}{color@@\sag@cur@blk @\sag@cur@sub@blk}%
     \protected@edef\tag{\@nameuse{name@@\sag@cur@blk @\sag@cur@sub@blk}}%
     \typeout{   - \tag\space(\doc) [\sag@cur@sub@blk/\sag@cnt@sub@blk]}%
-    \clearpage%
+    \clearpage
 }
 
 \def\sag@blk@prefix{\sag@cur@blk)\space}
@@ -239,7 +250,11 @@ sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3
     \pdfbookmark[1]{\sag@sub@blk@prefix \tag}{\doc-s}%
     \appto\sag@@ph{\hypertarget{sag@sub@blk:\sag@cur@blk @\sag@cur@sub@blk}{}}
     % include with fixed layout
-    \includepdf[pages=-,fitpaper,pagecommand={\thispagestyle{lidag@layout}}]{\doc.pdf}
+    \ifsag@setup@fitpage@
+        \includepdf[pages=-,pagecommand={\thispagestyle{lidag@layout}},fitpaper]{\doc.pdf}%
+    \else
+        \includepdf[pages=-,pagecommand={\thispagestyle{lidag@layout}}]{\doc.pdf}%
+    \fi
 }
 
 \def\sag@display@slides@withsubs{

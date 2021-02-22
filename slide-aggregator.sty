@@ -20,14 +20,19 @@
 %% Styles for markers
 %% -----------------------------------------------------------------------------
 
+\def\slidag@deffont{\large\upshape\sffamily}
+\newlength\slidag@sublength \slidag@sublength=8cm
 \tikzset{%
 slidag@blob/.style={%
     rectangle,rounded corners=2.75pt,%
-    fill=#1!90!white,text=white!99!#1,%
-    font=\large\sffamily\upshape\mdseries,%
+    fill=#1!90!white,text=white,%
+    font=\slidag@deffont,%
     minimum height=.66cm,minimum width=1cm,%
     inner xsep=8pt%
-}}
+},%
+slidag@style@layout/.style={scale=1.2,every node/.append style={transform shape}},%
+slidag@subnode/.style={below left,yshift=-.15cm,outer sep=0pt,inner sep=0pt,text width=\slidag@sublength}%
+}
 
 %% Hooknode
 %% -----------------------------------------------------------------------------
@@ -37,7 +42,7 @@ slidag@blob/.style={%
 
 \def\@slidag@hknode#1{%
 \node[above left=0.25cm,slidag@blob=slidag@comment,text=black,%
-    text width=8.5cm,fill opacity=0.65,text opacity=1,#1] (tp)
+    text width=8.5cm,fill opacity=0.65,text opacity=1,#1] (hkn)
     at (current page.south east) {% if (hook); (present(note)) => enote
     \@nameuse{slidag@pagehook@\thepage}%
     \ifcsname slidag@pagenote@\thepage\endcsname%
@@ -56,7 +61,7 @@ slidag@blob/.style={%
 
 \def\slidag@start@block{%
 \node at (current page.north east) {\hypertarget{slidag@pg:\thepage}{}\hypertarget{doc:\doc}{}};
-\node[below left=0.25cm,slidag@blob=\clr!85!black] (tp) at(current page.north east) {\thepage};% hypertarget to ensure correct position is hit
+\node[below left=0.25cm,slidag@blob=\clr!80!black] (tp) at(current page.north east) {\thepage};% hypertarget to ensure correct position is hit
 % \foreach[remember=\i as \li (initially 0)] \i in {1,...,\arabic{slidag@reg@block}} {
 %     \ifnum\i=\curi \def\opa{\@nameuse{color@\i}} \else \def\opa{lightgray} \fi
 %     \ifnum\i=1
@@ -73,22 +78,24 @@ slidag@blob/.style={%
 }
 
 \def\slidag@@pgmarker{\node at (current page.north east) {\hypertarget{slidag@pg:\thepage}{}};}
-\def\slidag@@pgblob{\node[below left=0.25cm,slidag@blob=\clr!85!black] (tp) at(current page.north east) {\thepage};}
+\def\slidag@@pgblob{\node[below left=0.25cm,slidag@blob=\blkclr,outer sep=0pt] (tp) at(current page.north east) {\thepage};}
 
 \def\slidag@@commentblob{%
     \ifcsname slidag@pagehook@\thepage\endcsname\slidag@hknode
-    \else\ifcsname slidag@pagenote@\thepage\endcsname\slidag@hknode\fi
+    \else\ifcsname slidag@pagenote@\thepage\endcsname\slidag@hknode\fi\fi
 }
 
 \def\slidag@inblock{%
   \slidag@@pgmarker\slidag@@pgblob
-  \node[left=0.25cm,slidag@blob=\clr] at(tp.west) {\slidag@cur@blkmark};
+  \node[left=0.25cm] at(tp.west) {\expandafter\usebox\csname slidag@s@\slidag@cur@blk\endcsname};
+  \node[slidag@subnode] at (tp.south east) {\hfill%
+  \expandafter\usebox\csname slidag@s@\slidag@cur@blk @\slidag@cur@sub@blk\endcsname};
   \slidag@@commentblob
 }
 
 \newpairofpagestyles{lidag@layout}{%
 \ihead{%
-\begin{tikzpicture}[remember picture,overlay]
+\hfill\begin{tikzpicture}[remember picture,overlay,slidag@style@layout]
 \ifx\slidag@cur@blkmark\@empty\slidag@start@block\else
 \slidag@inblock\fi
 \end{tikzpicture}}}
@@ -131,23 +138,36 @@ slidag@blob/.style={%
 % every hook will precreate its corresponding savebox
 % this should be fine
 
+\def\@slidag@build@blkblob#1#2{%
+\expandafter\newsavebox\csname slidag@s@\arabic{slidag@reg@block}\endcsname
+\expandafter\savebox\csname slidag@s@\arabic{slidag@reg@block}\endcsname{%
+    \tikz{\path node [slidag@blob=#1] {\hyperlink{slidag@blk:\arabic{slidag@reg@block}}{\arabic{slidag@reg@block}~#2}};}%
+}%
+}
+
 \newcommand*\@slidag@block[2][slidag@default@color]{%
     \stepcounter{slidag@reg@block}%
     \setcounter{slidag@reg@subblock}{0}%
     \@namedef{slidag@reg@subblock@\arabic{slidag@reg@block}}{0}%
     \@namedef{color@\arabic{slidag@reg@block}}{#1}%
     \@namedef{name@\arabic{slidag@reg@block}}{#2}%
-    \expandafter\newsavebox\csname slidag@s@\arabic{slidag@reg@block}\endcsname{%
-        \tikz{\path node [slidag@blob=#1] {\slidag@cur@blkmark};}%
-    }%
+    \@slidag@build@blkblob{#1}{#2}%
+}
+
+\def\@slidag@build@subblkblob#1#2{%
+\expandafter\newsavebox\csname slidag@s@\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}\endcsname
+\expandafter\savebox\csname slidag@s@\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}\endcsname{%
+    \tikz{\path node [slidag@blob=#1,text=black] {\hyperlink{slidag@sub@blk:\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}}{\arabic{slidag@reg@subblock}~#2}};}%
+}%
 }
 
 \newcommand*\@slidag@subblock[3][\@nameuse{color@\arabic{slidag@reg@block}}]{%
     \stepcounter{slidag@reg@subblock}%
     \expandafter\edef\csname slidag@reg@subblock@\arabic{slidag@reg@block}\endcsname{\arabic{slidag@reg@subblock}}%
-    \@namedef{color@@\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}}{#1}%
+    \@namedef{color@@\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}}{#1!50!white}%
     \@namedef{file@@\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}}{#2}%
     \@namedef{name@@\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}}{#3}%
+    \@slidag@build@subblkblob{\@nameuse{color@@\arabic{slidag@reg@block}@\arabic{slidag@reg@subblock}}}{#3}%
 }
 
 \let\slideblock\@slidag@block

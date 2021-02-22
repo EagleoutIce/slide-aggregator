@@ -1,0 +1,130 @@
+%% slide-aggregator.sty
+%%
+%% --------------------------------------------------------------------------
+%%
+%% Autor: Florian Sihler, 22.02.2021
+%%
+%% Package to collect (probably lecture-)slides
+
+% All internal commands are prefixed by 'slidag'
+
+\ProvidesPackage{slide-aggregator}[2020/08/22 v1.2 a color and palette control package based on xcolor]
+
+%% Packages
+%% -----------------------------------------------------------------------------
+
+\RequirePackage{hyperref}
+\RequirePackage{afterpage,scrlayer-scrpage,etoolbox,bookmark,pdfpages,tikz}
+
+
+%% Styles for markers
+%% -----------------------------------------------------------------------------
+
+\tikzset{%
+    slidag@blob/.style={%
+        rectangle,rounded corners=2.75pt,%
+        fill=#1!90!white,text=white!99!#1,%
+        font=\large\sffamily\upshape\mdseries,%
+        minimum height=.66cm,minimum width=1cm,%
+        inner xsep=8pt%
+    }%
+}
+
+%% Hooknode
+%% -----------------------------------------------------------------------------
+
+\colorlet{slidag@comment}{white!85!black}
+\def\slidag@commentname{\textit{Notiz:}}
+\def\slidag@hknode{%
+    \protected@edef\slidag@tmp{%
+        \noexpand\node[%
+            above left=0.25cm,slidag@blob=slidag@comment,text=black,%
+            text width=8.5cm,fill opacity=0.65,text opacity=1,
+            \@nameuse{slidag@extraopts@\thepage}] (tp) at(current page.south east) %
+        {% if (hook); (present(note)) => enote
+            \noexpand\@nameuse{slidag@pagehook@\thepage}\noexpand%
+            \ifcsname slidag@pagenote@\noexpand\thepage\noexpand\endcsname%
+                \noexpand\par\noexpand\slidag@commentname\noexpand\space%
+                \noexpand\@nameuse{slidag@pagenote@\thepage}\noexpand%
+            \fi\noexpand\strut%
+        };%
+    }\slidag@tmp%
+}
+
+%% headings
+%% -----------------------------------------------------------------------------
+
+\newpairofpagestyles{lidag@layout}{%
+\ihead{%
+\expandafter\ifx\expandafter!\currentbm!
+\begin{tikzpicture}[remember picture,overlay]
+\node at (current page.north east) {\hypertarget{pg:\thepage}{}\hypertarget{doc:\doc}{}};
+\node[below left=0.25cm,slidag@blob=\clr!85!black] (tp) at(current page.north east) {\thepage};% hypertarget to ensure correct position is hit
+\foreach[remember=\i as \li (initially 0)] \i in {1,...,\arabic{regsecctr}} {
+    \ifnum\i=\curi \def\opa{\@nameuse{color@\i}} \else \def\opa{lightgray} \fi
+    \ifnum\i=1
+    \node[below right=0.25cm,slidag@blob=\opa] (p\i) at(current page.north west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
+    \else
+    \ifnum\i=5
+        \node[below right,yshift=-0.25cm,slidag@blob=\opa] (p\i) at (p1.south west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
+    \else\ifnum\i=8
+        \node[below right,yshift=-0.25cm,slidag@blob=\opa] (p\i) at (p5.south west) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
+    \else
+    \node[right=0.25cm,slidag@blob=\opa] (p\i) at (p\li.east) {\hyperlink{doc:\@nameuse{file@\i}}{\i~\@nameuse{name@\i}}};
+    \fi\fi\fi
+}
+\end{tikzpicture}%
+\else
+\begin{tikzpicture}[remember picture,overlay]
+  \node at (current page.north east) {\hypertarget{pg:\thepage}{}};
+  \node[below left=0.25cm,slidag@blob=\clr!85!black] (tp) at(current page.north east) {\thepage};
+  \node[left=0.25cm,slidag@blob=\clr] at(tp.west) {\currentbm};
+  \ifcsname slidag@pagehook@\thepage\endcsname\slidag@hknode
+  \else\ifcsname slidag@pagenote@\thepage\endcsname\slidag@hknode\fi
+  \fi
+\end{tikzpicture}%
+\fi}
+}
+
+\newcommand\pagehook[3][]{%
+\@namedef{slidag@extraopts@#2}{#1}%
+\ifcsname slidag@pagehook@#2\endcsname
+    \csappto{slidag@pagehook@#2}{,\space#3}%
+\else
+    \csappto{slidag@pagehook@#2}{#3}%
+\fi
+}
+
+\newcommand\pagenote[3][]{%
+\@namedef{slidag@extraopts@#2}{#1}%
+\ifcsname slidag@pagenote@#2\endcsname
+    \csappto{slidag@pagenote@#2}{,\space#3}%
+\else
+    \csappto{slidag@pagenote@#2}{#3}%
+\fi
+}
+\def\refslide#1{\textbf{\color{\clr}\hyperlink{pg:#1}{#1}}}
+\def\reflink#1#2{\textbf{\color{\clr}\href{#1}{#2}}}
+
+\newcounter{regsecctr}
+\def\regsec#1[#2]: #3;{%
+    \stepcounter{regsecctr}
+    \@namedef{file@\arabic{regsecctr}}{#1}
+    \@namedef{color@\arabic{regsecctr}}{sol-#2}
+    \@namedef{name@\arabic{regsecctr}}{#3}
+}
+
+\def\displayslides{%
+\foreach \i in {1,...,\arabic{regsecctr}} {%
+    \def\doc{\@nameuse{file@\i}}%
+    \def\tag{\@nameuse{name@\i}}%
+    \def\clr{\@nameuse{color@\i}}%
+    \xdef\curi{\i}
+    \clearpage
+    \def\currentbm{}
+    \afterpage{\gdef\currentbm{\hyperlink{doc:\doc}{\i~\tag}}}
+    \pdfbookmark[0]{\i) \tag}{\doc-m}
+    \includepdf[pages=-,fitpaper,pagecommand={\thispagestyle{lidag@layout}}]{\doc.pdf}
+}}
+
+\endinput

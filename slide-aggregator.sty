@@ -54,8 +54,8 @@ sag@blob/.style={%
 },%
 sag@style@layout/.style={},%
 sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3em},%
-sag@subnode/.style={below left,yshift=-.15cm,outer sep=0pt,inner sep=0pt,text width=\sag@subnode@factor*\paperwidth,align=right},%
-sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overview@factor*\paperwidth,align=left}
+sag@subnode/.style={below left,yshift=-.15cm,outer sep=0pt,inner sep=0pt,text width=\sag@subnode@factor*\paperwidth,align=flush right},%
+sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overview@factor*\paperwidth,align=flush left}
 }
 
 \colorlet{sag@default@color}{black}
@@ -99,7 +99,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
             \ifnum\sag@tmp@i=\sag@cur@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
             \@sag@ubox[\sag@tmp]{\sag@tmp@i}\space
         \fi%
-    }\hfill%
+    }%
 }
 
 \def\sag@start@block{%
@@ -120,7 +120,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 
 % there has to be at least one as assured by main loop
 \def\sag@typesetsubblocks{%
-    \hfill\foreach \sag@tmp@i in {1,...,\sag@cnt@sub@blk} {%
+    \foreach \sag@tmp@i in {1,...,\sag@cnt@sub@blk} {%
         \ifnum\sag@tmp@i=\sag@cur@sub@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
         \@sag@ubox[\sag@tmp]{\sag@cur@blk @\sag@tmp@i}\space%
     }%
@@ -137,7 +137,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 
 \newpairofpagestyles{lidag@layout}{%
 \ihead{%
-\hfill\begin{tikzpicture}[remember picture,overlay,sag@style@layout]
+\begin{tikzpicture}[remember picture,overlay,sag@style@layout]
 \if@sag@atblockinit@ \sag@start@block \else
 \sag@inblock \fi
 \gdef\sag@@ph{}% clear so it is one applic-only
@@ -222,11 +222,9 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     \@sag@build@subblkblob{color@@\sag@br @\sag@sr}{#3}{#4}%
     % Auto adaption of max :)
     \ifsag@setup@auto@
-        \typeout{CURERNT: w:\the\sag@target@w, h:\the\sag@target@h}
         \setbox0=\hbox{\includegraphics{#2}}%
-        \typeout{GOT: w:\the\wd0; h:\the\ht0 (#2)}
-        \ifdim\wd0>\sag@target@w \typeout{WW}\sag@target@w=\wd0\fi
-        \ifdim\ht0>\sag@target@h \typeout{HH}\sag@target@h=\ht0\fi
+        \ifdim\wd0>\sag@target@w \sag@target@w=\wd0\fi
+        \ifdim\ht0>\sag@target@h \sag@target@h=\ht0\fi
     \fi
 }
 

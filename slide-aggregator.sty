@@ -84,15 +84,15 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     \fi};
 }
 
-\def\sag@comment@node{\@sag@comment@node{\@nameuse{sag@ceop@\thepage}}}
+\def\sag@comment@node{\protected@edef\@sag@tmp{\noexpand\@sag@comment@node{\@nameuse{sag@ceop@\thepage}}}\@sag@tmp}
 
 %% headings
 %% -----------------------------------------------------------------------------
 
 % hierarchy: 'block|subblock'
-% => auto wrapping?
 
-\def\sag@typesetmainblocks{%
+% TODO: AUTOMIZE WITH DISPLAY-CALL WHICH SUBHOOK TO TAKE
+\def\sag@@typesetmainasblocks{%
     \foreach \sag@tmp@i in {1,...,\sag@br} {%
         % only typeset if childs are present
         \ifnum\@nameuse{sag@reg@subblock@\sag@tmp@i}>0\relax
@@ -101,6 +101,16 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
         \fi%
     }%
 }
+
+\def\sag@@typesetmainassubblocks{%
+    \foreach \sag@tmp@i in {1,...,\sag@sr} {%
+        % only typeset if childs are present
+        \ifnum\sag@tmp@i=\sag@cur@sub@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
+        \@sag@ubox[\sag@tmp]{0@\sag@tmp@i}\space
+    }%
+}
+
+\let\sag@typesetmainblocks\sag@@typesetmainasblocks
 
 \def\sag@start@block{%
 \sag@@pgmarker\sag@@pgblob% don't pull out, it may change if on hooks
@@ -125,11 +135,16 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     }%
 }
 
-\def\sag@place@subnode{\node[sag@subnode] at (tp.south east) {\sag@typesetsubblocks};}
+\def\sag@@place@subnode{\node[sag@subnode] at (tp.south east) {\sag@typesetsubblocks};}
+\let\sag@place@subnode\sag@@place@subnode
+
+\def\sag@@currentblock{\node[below left,xshift=-0.25cm,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{\sag@cur@blk}};}
+\def\sag@@currentsubblock{\node[below left,xshift=-0.25cm,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{0@\sag@cur@sub@blk}};}
+\let\sag@currentblob\sag@@currentblock
 
 \def\sag@inblock{%
   \sag@@pgmarker\sag@@pgblob% don't pull out, it may change if on hooks
-  \node[below left,xshift=-0.25cm,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{\sag@cur@blk}};
+  \sag@currentblob
   \sag@place@subnode
   \sag@@commentblob
 }
@@ -188,12 +203,19 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 }
 
 \def\@sag@build@subblkblob#1#2#3{%
-    \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#2}}{text=black}%
+    \ifnum\sag@br>0
+        \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#2}}{text=black}%
+    \else% if treated as block:
+        \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#2}}{}%
+    \fi
     \@sag@sbox[sd]{\sag@br @\sag@sr}{sag@inactive@color}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#3}}{}%
 }
 
 
-
+% the '0' box:
+\@sag@sbox[s]{\sag@br}{sag@default@color}{\hyperlink{sag@blk:0}{\@sag@tpstyle{None}}}{}%
+\@sag@sbox[sd]{\sag@br}{sag@inactive@color}{\hyperlink{sag@blk:0}{None}}{}%
+\appto\sag@@ph{\hypertarget{sag@blk:0}{}}
 
 \newcommand*\@sag@block[2][sag@default@color]{%
     \@ifnextchar[{\@sag@@block{#1}{#2}}{\@sag@@block{#1}{#2}[#2]}%
@@ -214,7 +236,11 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 \def\@sag@@subblock#1#2#3[#4]{%
     \stepcounter{sag@reg@subblock}%
     \expandafter\edef\csname sag@reg@subblock@\sag@br\endcsname{\sag@sr}%
-    \colorlet{color@@\sag@br @\sag@sr}{\sag@shadecolor{#1}}%
+    \ifnum\sag@br>0%
+        \colorlet{color@@\sag@br @\sag@sr}{\sag@shadecolor{#1}}%
+    \else% 0 is treated as block
+        \colorlet{color@@\sag@br @\sag@sr}{#1}%
+    \fi
     \@namedef{file@@\sag@br @\sag@sr}{#2}%
     \@namedef{name@@\sag@br @\sag@sr}{#3}%
     \@namedef{short@@\sag@br @\sag@sr}{#4}%
@@ -230,14 +256,29 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 \let\slideblock\@sag@block
 \let\addslide\@sag@subblock
 
-%% display command
+%% display command - both
 %% -----------------------------------------------------------------------------
+
+\def\@sag@dopdf#1{%
+    \ifsag@setup@fitpage@
+        \includepdf[pages=-,pagecommand={\thispagestyle{#1}},fitpaper]{\doc.pdf}%
+    \else\ifsag@setup@auto@
+        \includepdf[pages=-,templatesize={\sag@target@w}{\sag@target@h},pagecommand={\thispagestyle{#1}},fitpaper]{\doc.pdf}%
+    \else
+        \includepdf[pages=-,pagecommand={\thispagestyle{#1}}]{\doc.pdf}%
+    \fi\fi
+}
+
+%% display command - multiple
+%% -----------------------------------------------------------------------------
+
+\def\sag@majorsl{\@sag@atblockinit@true
+\appto\sag@@ph{\global\@sag@atblockinit@false}}
 
 \def\sag@init@block{%
     \protected@edef\blktag{\@nameuse{name@\sag@cur@blk}}%
     \colorlet{blkclr}{color@\sag@cur@blk}%
-    \@sag@atblockinit@true
-    \appto\sag@@ph{\global\@sag@atblockinit@false}%
+    \sag@majorsl
     \edef\sag@cnt@sub@blk{\@nameuse{sag@reg@subblock@\sag@cur@blk}}%
     \typeout{\blktag\space[\sag@cnt@sub@blk]}%
 }
@@ -246,7 +287,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     \protected@edef\doc{\@nameuse{file@@\sag@cur@blk @\sag@cur@sub@blk}}%
     \colorlet{clr}{color@@\sag@cur@blk @\sag@cur@sub@blk}%
     \protected@edef\tag{\@nameuse{name@@\sag@cur@blk @\sag@cur@sub@blk}}%
-    \typeout{   - \tag\space(\doc) [\sag@cur@sub@blk/\sag@cnt@sub@blk]}%
+    \typeout{  - \tag\space(\doc) [\sag@cur@sub@blk/\sag@cnt@sub@blk]}%
     \clearpage
 }
 
@@ -263,13 +304,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     \pdfbookmark[1]{\sag@sub@blk@prefix \tag}{\doc-s}%
     \appto\sag@@ph{\hypertarget{sag@sub@blk:\sag@cur@blk @\sag@cur@sub@blk}{}}
     % include with fixed layout
-    \ifsag@setup@fitpage@
-        \includepdf[pages=-,pagecommand={\thispagestyle{lidag@layout}},fitpaper]{\doc.pdf}%
-    \else\ifsag@setup@auto@
-        \includepdf[pages=-,templatesize={\sag@target@w}{\sag@target@h},pagecommand={\thispagestyle{lidag@layout}},fitpaper]{\doc.pdf}%
-    \else
-        \includepdf[pages=-,pagecommand={\thispagestyle{lidag@layout}}]{\doc.pdf}%
-    \fi\fi
+    \@sag@dopdf{lidag@layout}
 }
 
 \def\sag@display@slides@withsubs{
@@ -283,9 +318,37 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     \fi
 }}
 
+%% display command - single
+%% -----------------------------------------------------------------------------
+
+\def\sag@display@slides@onlysubs{%
+    \edef\sag@cur@blk{0}%
+    \edef\sag@cnt@sub@blk{\sag@sr}%
+    \let\sag@place@subnode\relax% no subnodes as no hiearchy to place
+    \let\sag@currentblob\sag@@currentsubblock% current is always sub never none
+    \let\sag@typesetmainblocks\sag@@typesetmainassubblocks% mains are subs!
+    \foreach \sag@cur@sub@blk in {1,...,\sag@cnt@sub@blk} {%
+        \@sag@display@slides@onlysubs
+    }%
+}
+
+\def\@sag@display@slides@onlysubs{%
+    \sag@init@subblock
+    \sag@majorsl% mark this as a start of a new segment (for major)
+    \colorlet{blkclr}{clr}%
+    \pdfbookmark[0]{\sag@sub@blk@prefix \tag}{\doc-m}%
+    \appto\sag@@ph{\hypertarget{sag@sub@blk:\sag@cur@blk @\sag@cur@sub@blk}{}}
+    % include with fixed layout
+    \@sag@dopdf{lidag@layout}
+}
+
+
+%% display command - main
+%% -----------------------------------------------------------------------------
+
 \def\displayslides{%
 \ifnum\value{sag@reg@block}=0%
-    ERROR: WIP FOR NO SUPS
+\sag@display@slides@onlysubs
 \else
 \sag@display@slides@withsubs
 \fi}

@@ -5,9 +5,14 @@ Ein kleines LaTeX-Paket was ich geschrieben habe um Vorlesungsfolien aufbereitet
 
 Der gesamte Code findet sich in der [slide-aggregator.sty](slide-aggregator.sty).
 
+*Hinweis: Die hier gezeigten Beispielpdfs werden auch hier erstellt und sind deswegen nur exemplarisch :)*
+
 ## Strukturen
 
-Das Paket unterstützt sowohl flache ([one-example.tex](examples/one-level/one-example.tex))
-hierarchische Strukturen (einer Stufe, [two-example.tex](examples/two-levels/two-example.tex)).
+Das Paket unterstützt flache Strukturen ([one-example.tex](examples/one-level/one-example.tex)):
+[![one-example](one-example.png)](examples/two-levels/two-example.tex)
 
+Das Paket unterstützt auch hierarchische Strukturen (einer Stufe, [two-example.tex](examples/two-levels/two-example.tex)).
 Dabei erlaubt es Querverweise, Kommentare und kann sich auch an PDFs unterschiedlicher Größen anpassen (`auto`-Option).
+Um die Anpassung an verschiedene Größen zu zeigen, ist in diesem Beispiel die ursprüngliche PDF-Größe grau hinterlegt:
+[![two-example](two-example.png)](examples/two-levels/two-example.tex)

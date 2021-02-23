@@ -1,0 +1,32 @@
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% just for the example for nicer colors :D
+\usepackage[hidelinks]{hyperref}
+\usepackage[prefix=]{xcolor-solarized}
+
+\usepackage[fitpage]{slide-aggregator}
+
+% Notiz: die Zahlen entsprechen hier den PDF-Namen die mir das Makefile für das Beispiel
+% einfach nummeriert.
+\addslide[orange] {0}{Toller Foliensatz}
+\addslide[magenta]{1}{Vom Tollen}
+\addslide[magenta]{2}{Supidu}
+\addslide[cyan]   {3}{Das Letzte}
+
+\pagenote{1}{Auch die Größe lässt sich anpassen und ist hier mal sehr groß.}
+\pagenote{2}{Dies ist die zweite Seite}
+\pagehook{2}{Key-word, Ski-word}
+
+\pagehook{2}{Noch ein Keyword}
+
+\pagehook{4}{Seite 4 und so (Und hier ist die 2: \refslide{2})}
+
+\pagenote{5}{Auch Seite 5 kann schön sein.}
+
+
+\begin{document}
+\displayslides
+\end{document}

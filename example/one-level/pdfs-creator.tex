@@ -1,0 +1,15 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage{pgffor}
+
+\usepackage{csquotes}
+
+\begin{document}
+\begin{frame}[c]
+    \Huge \content
+\end{frame}
+\foreach \i in {0,...,\jobname}{%
+\begin{frame}[c]
+    Die Seite \insertframenumber\ in der PDF: \enquote{\jobname.pdf}
+\end{frame}
+}
+\end{document}

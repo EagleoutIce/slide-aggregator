@@ -1,0 +1,14 @@
+\documentclass{article}
+\usepackage{pgffor}
+
+\usepackage{csquotes}
+\begin{document}
+\pdfpageheight 15cm
+\pdfpagewidth 28cm
+\begin{center}
+    \Huge \content
+\end{center}
+\foreach \i in {0,...,\jobname}{%
+\clearpage Die Seite \thepage\ in der PDF: \enquote{\jobname.pdf}
+}
+\end{document}

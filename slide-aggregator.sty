@@ -77,9 +77,11 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 \node[above left=0.25cm,sag@blob=sag@comment,text=black,%
     text width=8.5cm,fill opacity=0.65,text opacity=1,#1] (hkn)
     at (current page.south east) {% if (hook); (present(note)) => enote
-    \@nameuse{sag@pagehook@\thepage}%
+    \ifcsname sag@pagehook@\thepage\endcsname%
+        \@nameuse{sag@pagehook@\thepage}\par%
+    \fi
     \ifcsname sag@pagenote@\thepage\endcsname%
-        \par\sag@commentname\space%
+        \sag@commentname\space%
         \@nameuse{sag@pagenote@\thepage}%
     \fi};
 }

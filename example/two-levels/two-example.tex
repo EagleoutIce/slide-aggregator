@@ -1,0 +1,43 @@
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% just for the example for nicer colors :D
+\usepackage[hidelinks]{hyperref}
+\usepackage[prefix=]{xcolor-solarized}
+
+\usepackage[fitpage]{slide-aggregator}
+
+% Notiz: die Zahlen entsprechen hier den PDF-Namen die mir das Makefile für das Beispiel
+% einfach nummeriert.
+% Die zweiten eckigen Klammern sind optional und erlauben 'verkürzte' Bezeichner, wenn der
+% Abschnitt nicht der aktuelle ist
+\slideblock[orange]{Der erste Block}
+\addslide {0}{Toller Foliensatz} [Toll]
+\addslide {1}{Vom Tollen}        [2]
+\addslide {2}{Supidu}
+\slideblock[cyan]{Huhu-Block}
+\addslide {3}{Auch Mega}         [!!]
+\addslide {4}{Vom Glubschen}     [:)]
+\slideblock[green]{Superblock}
+\addslide {5}{Hehehe}            [5]
+\slideblock[violet]{Leere Block}
+% Notiz: Blöcke ohne nachfolgenden Slides werden ignoriert;
+% das fand ich so sinniger, weil dies eBlöcke ja keinen Inhalt hätten.
+
+
+\pagenote{1}{Auch die Größe lässt sich anpassen und ist hier mal sehr groß.}
+\pagenote{2}{Dies ist die zweite Seite}
+\pagehook{2}{Key-word, Ski-word}
+
+\pagehook{2}{Noch ein Keyword}
+
+\pagehook{4}{Seite 4 und so (Und hier ist die 2: \refslide{2})}
+
+\pagenote{5}{Auch Seite 5 kann schön sein.}
+
+
+\begin{document}
+\displayslides
+\end{document}

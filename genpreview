@@ -11,5 +11,6 @@ function preview_for() {
     cd "${old}"
 }
 
-preview_for examples/one-level one-example
-preview_for examples/two-levels two-example
+cd examples
+preview_for one-level one-example
+preview_for two-levels two-example

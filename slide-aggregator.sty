@@ -37,7 +37,7 @@
 \newlength\sag@target@h
 \fi
 
-\def\sag@default@font{\Large\upshape\sffamily}
+\def\sag@default@font{\fontsize{12pt}{20pt}\upshape\sffamily}
 \def\sag@subnode@factor{.225}
 \def\sag@overview@factor{.725}
 
@@ -54,7 +54,7 @@ sag@blob/.style={%
 },%
 sag@style@layout/.style={},%
 sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3em},%
-sag@subnode/.style={below left,yshift=-.15cm,outer sep=0pt,inner sep=0pt,text width=\sag@subnode@factor*\paperwidth,align=flush right},%
+sag@subnode/.style={below left,yshift=-.25cm,outer sep=0pt,inner sep=0pt,text width=\sag@subnode@factor*\paperwidth,align=flush right},%
 sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overview@factor*\paperwidth,align=flush left}
 }
 
@@ -104,8 +104,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 
 \def\sag@start@block{%
 \sag@@pgmarker\sag@@pgblob% don't pull out, it may change if on hooks
-\node[sag@overviewnode] (on) at (current page.north west) {\sag@typesetmainblocks};
-
+\node[sag@overviewnode] (on) at (current page.north west) {\sag@typesetmainblocks\endgraf};
 \sag@place@subnode
 \sag@@commentblob
 }
@@ -130,7 +129,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 
 \def\sag@inblock{%
   \sag@@pgmarker\sag@@pgblob% don't pull out, it may change if on hooks
-  \node[left=0.25cm] at(tp.west) {\expandafter\usebox\csname sag@s@\sag@cur@blk\endcsname};
+  \node[below left,xshift=-0.25cm,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{\sag@cur@blk}};
   \sag@place@subnode
   \sag@@commentblob
 }
@@ -177,7 +176,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 \def\@sag@sbox[#1]#2#3#4#5{%
     \expandafter\newsavebox\csname sag@#1@#2\endcsname
     \expandafter\savebox\csname sag@#1@#2\endcsname{%
-        \strut\tikz[baseline]{\node [sag@blob=#3,#5] {#4};}%
+        \strut\tikz{\node [sag@blob=#3,#5] {#4};}%
     }%
 }
 

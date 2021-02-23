@@ -90,16 +90,23 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 %% -----------------------------------------------------------------------------
 
 % hierarchy: 'block|subblock'
-% => auto wrapping?
 
+% TODO: AUTOMIZE WITH DISPLAY-CALL WHICH SUBHOOK TO TAKE
 \def\sag@typesetmainblocks{%
+    \ifnum\sag@br>0\relax
     \foreach \sag@tmp@i in {1,...,\sag@br} {%
         % only typeset if childs are present
         \ifnum\@nameuse{sag@reg@subblock@\sag@tmp@i}>0\relax
             \ifnum\sag@tmp@i=\sag@cur@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
             \@sag@ubox[\sag@tmp]{\sag@tmp@i}\space
         \fi%
+    }\else%treat as block
+    \foreach \sag@tmp@i in {1,...,\sag@sr} {%
+        % only typeset if childs are present
+        \ifnum\sag@tmp@i=\sag@cur@sub@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
+        \@sag@ubox[\sag@tmp]{0@\sag@tmp@i}\space
     }%
+    \fi
 }
 
 \def\sag@start@block{%
@@ -188,7 +195,11 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 }
 
 \def\@sag@build@subblkblob#1#2#3{%
-    \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#2}}{text=black}%
+    \ifnum\sag@br>0
+        \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#2}}{text=black}%
+    \else% if treated as block:
+        \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#2}}{}%
+    \fi
     \@sag@sbox[sd]{\sag@br @\sag@sr}{sag@inactive@color}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#3}}{}%
 }
 
@@ -217,7 +228,11 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 \def\@sag@@subblock#1#2#3[#4]{%
     \stepcounter{sag@reg@subblock}%
     \expandafter\edef\csname sag@reg@subblock@\sag@br\endcsname{\sag@sr}%
-    \colorlet{color@@\sag@br @\sag@sr}{#1}%
+    \ifnum\sag@br>0%
+        \colorlet{color@@\sag@br @\sag@sr}{\sag@shadecolor{#1}}%
+    \else% 0 is treated as block
+        \colorlet{color@@\sag@br @\sag@sr}{#1}%
+    \fi
     \@namedef{file@@\sag@br @\sag@sr}{#2}%
     \@namedef{name@@\sag@br @\sag@sr}{#3}%
     \@namedef{short@@\sag@br @\sag@sr}{#4}%
@@ -259,10 +274,8 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 }
 
 \def\sag@init@subblock{%
-    \@ifstar{%
-        \colorlet{clr}{color@@\sag@cur@blk @\sag@cur@sub@blk}}%
-        {\colorlet{clr}{\sag@shadecolor{color@@\sag@cur@blk @\sag@cur@sub@blk}}}%
     \protected@edef\doc{\@nameuse{file@@\sag@cur@blk @\sag@cur@sub@blk}}%
+    \colorlet{clr}{color@@\sag@cur@blk @\sag@cur@sub@blk}%
     \protected@edef\tag{\@nameuse{name@@\sag@cur@blk @\sag@cur@sub@blk}}%
     \typeout{   - \tag\space(\doc) [\sag@cur@sub@blk/\sag@cnt@sub@blk]}%
     \clearpage
@@ -272,7 +285,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 \def\sag@sub@blk@prefix{\sag@cur@sub@blk)\space}
 
 \def\@sag@display@slides@withsubs{%
-    \sag@init@subblock\relax
+    \sag@init@subblock
     % only insert bm if there is at least one slideset inside
     \ifnum\sag@cur@sub@blk=1\relax
         \pdfbookmark[0]{\sag@blk@prefix\blktag}{\doc-m}%
@@ -307,7 +320,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 }
 
 \def\@sag@display@slides@onlysubs{%
-    \sag@init@subblock*
+    \sag@init@subblock
     \colorlet{blkclr}{clr}%
     \pdfbookmark[0]{\sag@sub@blk@prefix \tag}{\doc-m}%
     \appto\sag@@ph{\hypertarget{sag@sub@blk:\sag@cur@blk @\sag@cur@sub@blk}{}}

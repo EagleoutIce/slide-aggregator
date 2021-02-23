@@ -347,10 +347,13 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 %% -----------------------------------------------------------------------------
 
 \def\displayslides{%
+\begingroup
 \ifnum\value{sag@reg@block}=0%
 \sag@display@slides@onlysubs
 \else
 \sag@display@slides@withsubs
-\fi}
+\fi
+\endgroup
+}
 
 \endinput

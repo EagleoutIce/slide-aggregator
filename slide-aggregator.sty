@@ -84,7 +84,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     \fi};
 }
 
-\def\sag@comment@node{\@sag@comment@node{\@nameuse{sag@ceop@\thepage}}}
+\def\sag@comment@node{\protected@edef\@sag@tmp{\noexpand\@sag@comment@node{\@nameuse{sag@ceop@\thepage}}}\@sag@tmp}
 
 %% headings
 %% -----------------------------------------------------------------------------
@@ -193,7 +193,10 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 }
 
 
-
+% the '0' box:
+\@sag@sbox[s]{\sag@br}{sag@default@color}{\hyperlink{sag@blk:0}{\@sag@tpstyle{None}}}{}%
+\@sag@sbox[sd]{\sag@br}{sag@inactive@color}{\hyperlink{sag@blk:0}{None}}{}%
+\appto\sag@@ph{\hypertarget{sag@blk:0}{}}
 
 \newcommand*\@sag@block[2][sag@default@color]{%
     \@ifnextchar[{\@sag@@block{#1}{#2}}{\@sag@@block{#1}{#2}[#2]}%
@@ -214,7 +217,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 \def\@sag@@subblock#1#2#3[#4]{%
     \stepcounter{sag@reg@subblock}%
     \expandafter\edef\csname sag@reg@subblock@\sag@br\endcsname{\sag@sr}%
-    \colorlet{color@@\sag@br @\sag@sr}{\sag@shadecolor{#1}}%
+    \colorlet{color@@\sag@br @\sag@sr}{#1}%
     \@namedef{file@@\sag@br @\sag@sr}{#2}%
     \@namedef{name@@\sag@br @\sag@sr}{#3}%
     \@namedef{short@@\sag@br @\sag@sr}{#4}%
@@ -230,7 +233,20 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 \let\slideblock\@sag@block
 \let\addslide\@sag@subblock
 
-%% display command
+%% display command - both
+%% -----------------------------------------------------------------------------
+
+\def\@sag@dopdf#1{%
+    \ifsag@setup@fitpage@
+        \includepdf[pages=-,pagecommand={\thispagestyle{#1}},fitpaper]{\doc.pdf}%
+    \else\ifsag@setup@auto@
+        \includepdf[pages=-,templatesize={\sag@target@w}{\sag@target@h},pagecommand={\thispagestyle{#1}},fitpaper]{\doc.pdf}%
+    \else
+        \includepdf[pages=-,pagecommand={\thispagestyle{#1}}]{\doc.pdf}%
+    \fi\fi
+}
+
+%% display command - multiple
 %% -----------------------------------------------------------------------------
 
 \def\sag@init@block{%
@@ -243,8 +259,10 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 }
 
 \def\sag@init@subblock{%
+    \@ifstar{%
+        \colorlet{clr}{color@@\sag@cur@blk @\sag@cur@sub@blk}}%
+        {\colorlet{clr}{\sag@shadecolor{color@@\sag@cur@blk @\sag@cur@sub@blk}}}%
     \protected@edef\doc{\@nameuse{file@@\sag@cur@blk @\sag@cur@sub@blk}}%
-    \colorlet{clr}{color@@\sag@cur@blk @\sag@cur@sub@blk}%
     \protected@edef\tag{\@nameuse{name@@\sag@cur@blk @\sag@cur@sub@blk}}%
     \typeout{   - \tag\space(\doc) [\sag@cur@sub@blk/\sag@cnt@sub@blk]}%
     \clearpage
@@ -254,7 +272,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 \def\sag@sub@blk@prefix{\sag@cur@sub@blk)\space}
 
 \def\@sag@display@slides@withsubs{%
-    \sag@init@subblock
+    \sag@init@subblock\relax
     % only insert bm if there is at least one slideset inside
     \ifnum\sag@cur@sub@blk=1\relax
         \pdfbookmark[0]{\sag@blk@prefix\blktag}{\doc-m}%
@@ -263,13 +281,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     \pdfbookmark[1]{\sag@sub@blk@prefix \tag}{\doc-s}%
     \appto\sag@@ph{\hypertarget{sag@sub@blk:\sag@cur@blk @\sag@cur@sub@blk}{}}
     % include with fixed layout
-    \ifsag@setup@fitpage@
-        \includepdf[pages=-,pagecommand={\thispagestyle{lidag@layout}},fitpaper]{\doc.pdf}%
-    \else\ifsag@setup@auto@
-        \includepdf[pages=-,templatesize={\sag@target@w}{\sag@target@h},pagecommand={\thispagestyle{lidag@layout}},fitpaper]{\doc.pdf}%
-    \else
-        \includepdf[pages=-,pagecommand={\thispagestyle{lidag@layout}}]{\doc.pdf}%
-    \fi\fi
+    \@sag@dopdf{lidag@layout}
 }
 
 \def\sag@display@slides@withsubs{
@@ -283,9 +295,33 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
     \fi
 }}
 
+%% display command - single
+%% -----------------------------------------------------------------------------
+
+\def\sag@display@slides@onlysubs{%
+    \edef\sag@cur@blk{0}%
+    \edef\sag@cnt@sub@blk{\sag@sr}%
+    \foreach \sag@cur@sub@blk in {1,...,\sag@cnt@sub@blk} {%
+        \@sag@display@slides@onlysubs
+    }%
+}
+
+\def\@sag@display@slides@onlysubs{%
+    \sag@init@subblock*
+    \colorlet{blkclr}{clr}%
+    \pdfbookmark[0]{\sag@sub@blk@prefix \tag}{\doc-m}%
+    \appto\sag@@ph{\hypertarget{sag@sub@blk:\sag@cur@blk @\sag@cur@sub@blk}{}}
+    % include with fixed layout
+    \@sag@dopdf{lidag@layout}
+}
+
+
+%% display command - main
+%% -----------------------------------------------------------------------------
+
 \def\displayslides{%
 \ifnum\value{sag@reg@block}=0%
-    ERROR: WIP FOR NO SUPS
+\sag@display@slides@onlysubs
 \else
 \sag@display@slides@withsubs
 \fi}

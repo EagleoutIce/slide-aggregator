@@ -7,7 +7,7 @@ Der gesamte Code findet sich in der [slide-aggregator.sty](slide-aggregator.sty)
 
 ## Strukturen
 
-Das Paket unterstützt sowohl flache ([one-example.tex](example/one-level/one-example.tex))
-hierarchische Strukturen (einer Stufe, [two-example.tex](example/two-levels/two-example.tex)).
+Das Paket unterstützt sowohl flache ([one-example.tex](examples/one-level/one-example.tex))
+hierarchische Strukturen (einer Stufe, [two-example.tex](examples/two-levels/two-example.tex)).
 
 Dabei erlaubt es Querverweise, Kommentare und kann sich auch an PDFs unterschiedlicher Größen anpassen (`auto`-Option).

@@ -37,6 +37,9 @@
 \newlength\sag@target@h
 \fi
 
+\newlength\sag@pgdist@w \sag@pgdist@w=.25cm
+\newlength\sag@pgdist@h \sag@pgdist@h=.25cm
+
 \def\sag@default@font{\fontsize{12pt}{20pt}\upshape\sffamily}
 \def\sag@subnode@factor{.225}
 \def\sag@overview@factor{.725}
@@ -45,17 +48,14 @@
 \newcounter{sag@reg@subblock} \def\sag@sr{\arabic{sag@reg@subblock}}
 
 \tikzset{%
-sag@blob/.style={%
-    rectangle,rounded corners=2.75pt,%
-    fill=#1!90!white,text=white,%
-    font=\sag@default@font,%
-    minimum height=2.25em,%
-    inner xsep=2ex%
-},%
-sag@style@layout/.style={},%
-sag@style@pgnode/.style={below left=0.25cm,sag@blob=clr!80!black,minimum width=3em},%
-sag@subnode/.style={below left,yshift=-.25cm,outer sep=0pt,inner sep=0pt,text width=\sag@subnode@factor*\paperwidth,align=flush right},%
-sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overview@factor*\paperwidth,align=flush left}
+    sag@blob/.style={%
+        rectangle,rounded corners=2.75pt,fill=#1!90!white,text=white,%
+        font=\sag@default@font,minimum height=2.25em,inner xsep=2ex%
+    },%
+    sag@style@layout/.style={},%
+    sag@style@pgnode/.style={below left=0.25cm,sag@blob=blkclr,minimum width=3.75em},%
+    sag@subnode/.style={below left,yshift=-\sag@pgdist@h,outer sep=0pt,inner sep=0pt,text width=\sag@subnode@factor*\paperwidth,align=flush right},%
+    sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overview@factor*\paperwidth,align=flush left}%
 }
 
 \colorlet{sag@default@color}{black}
@@ -122,7 +122,7 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 }
 
 \def\sag@@pgmarker{\node at (current page.north east) {\sag@@ph\hypertarget{sag@pg:\thepage}{}};}
-\def\sag@@pgblob{\node[below left=0.25cm,sag@blob=blkclr,outer sep=0pt] (tp) at(current page.north east) {\@sag@pgstyle{\thepage}};}
+\def\sag@@pgblob{\node[sag@style@pgnode] (tp) at(current page.north east) {\@sag@pgstyle{\thepage}};}
 
 \def\sag@@commentblob{%
     \ifcsname sag@pagehook@\thepage\endcsname\sag@comment@node
@@ -140,8 +140,8 @@ sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overvi
 \def\sag@@place@subnode{\node[sag@subnode] at (tp.south east) {\sag@typesetsubblocks};}
 \let\sag@place@subnode\sag@@place@subnode
 
-\def\sag@@currentblock{\node[below left,xshift=-0.25cm,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{\sag@cur@blk}};}
-\def\sag@@currentsubblock{\node[below left,xshift=-0.25cm,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{0@\sag@cur@sub@blk}};}
+\def\sag@@currentblock{\node[below left,xshift=-\sag@pgdist@w,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{\sag@cur@blk}};}
+\def\sag@@currentsubblock{\node[below left,xshift=-\sag@pgdist@w,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{0@\sag@cur@sub@blk}};}
 \let\sag@currentblob\sag@@currentblock
 
 \def\sag@inblock{%

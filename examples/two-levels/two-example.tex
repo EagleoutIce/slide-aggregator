@@ -7,21 +7,22 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage[prefix=]{xcolor-solarized}
 
-\usepackage[fitpage]{slide-aggregator}
+% auto will adapt to different page sizes and unify them
+\usepackage[auto]{slide-aggregator}
 
 % Notiz: die Zahlen entsprechen hier den PDF-Namen die mir das Makefile für das Beispiel
-% einfach nummeriert.
+% einfach nummeriert, zum Spaß habe ich die Reihenfolge geändert.
 % Die zweiten eckigen Klammern sind optional und erlauben 'verkürzte' Bezeichner, wenn der
 % Abschnitt nicht der aktuelle ist
 \slideblock[orange]{Der erste Block}
     \addslide          {0}{Toller Foliensatz} [Toll]
     \addslide          {1}{Vom Tollen}        [2]
-    \addslide[magenta] {2}{CustomColor}
+    \addslide[magenta] {5}{CustomColor}
 \slideblock[cyan]{Huhu-Block}
-    \addslide {3}{Auch Mega}         [!!]
-    \addslide {4}{Vom Glubschen}     [:)]
+    \addslide {4}{Auch Mega}         [!!]
+    \addslide {2}{Vom Glubschen}     [:)]
 \slideblock[green]{Superblock}
-    \addslide {5}{Hehehe}            [5]
+    \addslide {3}{Hehehe}            [5]
 \slideblock[violet]{Leere Block}
 % Notiz: Blöcke ohne nachfolgenden Slides werden ignoriert;
 % das fand ich so sinniger, weil dies eBlöcke ja keinen Inhalt hätten.

@@ -1,14 +1,26 @@
 \documentclass{article}
-\usepackage{pgffor}
+\usepackage{pgffor}% für mehrere Seiten
+\usepackage{csquotes}% für Anführungszeichen :)
+\usepackage{xcolor,pagecolor}% für die Hintergrundfarbe der Seite um ursprüngliche Größe zu zeigen
 
-\usepackage{csquotes}
+\def\PageInfo{Diese PDF hat eine ursprüngliche Größe von \the\pdfpageheight~Höhe und \the\pdfpagewidth~Breite (graue Fläche, die im \texttt{auto}-Modus automatisch angepasst wird).}
+\parindent=0pt
+\parskip=\baselineskip
+
 \begin{document}
-\pdfpageheight 15cm
-\pdfpagewidth 28cm
+% Hier setzte ich die Hintergrundfarbe, damit man die unterschiedlichen Größen auch im finalen Foliensatz sehen kann.
+\pagecolor{gray!25!white}
+% Hier ändere ich die Größe abhängig vom jobname, der durch das makefile ja nur eine Zahl ist :)
+\pdfpageheight \dimexpr14cm+0.25cm*\jobname\relax
+\pdfpagewidth \dimexpr26.5cm+0.5cm*\jobname\relax
+
+% Ab hier kommt der Demo-Inhalt.
 \begin{center}
-    \Huge \content
+    \Huge \texttt{\jobname.pdf}: \content
 \end{center}
+\PageInfo
 \foreach \i in {0,...,\jobname}{%
-\clearpage Die Seite \thepage\ in der PDF: \enquote{\jobname.pdf}
+    \clearpage Die \thepage. Seite in \enquote{\jobname.pdf} (die Reihenfolge bestimme ich in \texttt{two-example.tex}. Da die Seitengröße in dem Beispiel davon abhängt zeige ich so, dass wirklich die Maxima gewhält werden)\par
+    \PageInfo
 }
 \end{document}

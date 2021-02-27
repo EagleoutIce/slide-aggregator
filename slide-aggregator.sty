@@ -20,6 +20,10 @@
 \newif\ifsag@setup@auto@
 \DeclareOption{auto}{\sag@setup@fitpage@false\sag@setup@auto@true}
 \DeclareOption{noauto}{\sag@setup@auto@false}
+
+\newif\ifsag@setup@runningtoc@
+\DeclareOption{runningtoc}{\sag@setup@runningtoc@true}
+\DeclareOption{norunningtoc}{\sag@setup@runningtoc@false}
 \ProcessOptions*
 
 %% Packages
@@ -74,8 +78,8 @@
 \def\sag@commentname{\textit{Notiz:}}
 
 \def\@sag@comment@node#1{%
-\node[above left=0.25cm,sag@blob=sag@comment,text=black,%
-    text width=8.5cm,fill opacity=0.65,text opacity=1,#1] (hkn)
+\node[above left=.25cm,sag@blob=sag@comment,text=black,%
+    text width=8.5cm,fill opacity=.65,text opacity=1,#1] (hkn)
     at (current page.south east) {% if (hook); (present(note)) => enote
     \ifcsname sag@pagehook@\thepage\endcsname%
         \@nameuse{sag@pagehook@\thepage}\par%
@@ -99,7 +103,7 @@
         % only typeset if childs are present
         \ifnum\@nameuse{sag@reg@subblock@\sag@tmp@i}>0\relax
             \ifnum\sag@tmp@i=\sag@cur@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
-            \@sag@ubox[\sag@tmp]{\sag@tmp@i}\space
+            \@sag@ubox[\sag@tmp]{\sag@tmp@i}{}\space
         \fi%
     }%
 }
@@ -108,7 +112,7 @@
     \foreach \sag@tmp@i in {1,...,\sag@sr} {%
         % only typeset if childs are present
         \ifnum\sag@tmp@i=\sag@cur@sub@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
-        \@sag@ubox[\sag@tmp]{0@\sag@tmp@i}\space
+        \@sag@ubox[\sag@tmp]{0@\sag@tmp@i}{sub@}\space
     }%
 }
 
@@ -133,23 +137,37 @@
 \def\sag@typesetsubblocks{%
     \foreach \sag@tmp@i in {1,...,\sag@cnt@sub@blk} {%
         \ifnum\sag@tmp@i=\sag@cur@sub@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
-        \@sag@ubox[\sag@tmp]{\sag@cur@blk @\sag@tmp@i}\space%
+        \@sag@ubox[\sag@tmp]{\sag@cur@blk @\sag@tmp@i}{sub@}\space%
     }%
 }
 
 \def\sag@@place@subnode{\node[sag@subnode] at (tp.south east) {\sag@typesetsubblocks};}
 \let\sag@place@subnode\sag@@place@subnode
 
-\def\sag@@currentblock{\node[below left,xshift=-\sag@pgdist@w,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{\sag@cur@blk}};}
-\def\sag@@currentsubblock{\node[below left,xshift=-\sag@pgdist@w,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{0@\sag@cur@sub@blk}};}
+\def\sag@@currentblock{\node[below left,xshift=-\sag@pgdist@w,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{\sag@cur@blk}{}};}
+\def\sag@@currentsubblock{\node[below left,xshift=-\sag@pgdist@w,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{0@\sag@cur@sub@blk}{sub@}};}
 \let\sag@currentblob\sag@@currentblock
 
-\def\sag@inblock{%
+\def\sag@inblock@plain{%
   \sag@@pgmarker\sag@@pgblob% don't pull out, it may change if on hooks
   \sag@currentblob
   \sag@place@subnode
   \sag@@commentblob
 }
+
+\def\sag@inblock@rtoc{%
+  \sag@@pgmarker\sag@@pgblob% don't pull out, it may change if on hooks
+  \sag@currentblob
+  \sag@place@subnode
+  \sag@@commentblob
+  \node[sag@overviewnode,scale=0.5] (on) at (current page.north west) {\sag@typesetmainblocks\endgraf};
+}
+
+\ifsag@setup@runningtoc@
+\let\sag@inblock\sag@inblock@rtoc
+\else
+\let\sag@inblock\sag@inblock@plain
+\fi
 
 \newpairofpagestyles{lidag@layout}{%
 \ihead{%
@@ -168,7 +186,7 @@
         \csappto{#1}{,\space#2}\fi
     \else\@namedef{#1}{#2}\fi}
 
-\newcommand\pagehook[3][]{%
+\newcommand*\pagehook[3][]{%
     \@sag@appto@list{sag@ceop@#2}{#1}%
     \@sag@appto@list{sag@pagehook@#2}{#3}%
 }
@@ -193,30 +211,31 @@
 \def\@sag@sbox[#1]#2#3#4#5{%
     \expandafter\newsavebox\csname sag@#1@#2\endcsname
     \expandafter\savebox\csname sag@#1@#2\endcsname{%
-        \strut\tikz{\node [sag@blob=#3,#5] {#4};}%
+        \tikz{\node [sag@blob=#3,#5] {#4};}%
     }%
 }
 
-\def\@sag@ubox[#1]#2{\expandafter\usebox\csname sag@#1@#2\endcsname}
+% ['s' or 'sd'] #2 is marker 'sub @ main', #3 is prefix
+\def\@sag@ubox[#1]#2#3{\strut\hyperlink{sag@#3blk:#2}{\expandafter\usebox\csname sag@#1@#2\endcsname}}
 
 \def\@sag@build@blkblob#1#2#3{%
-    \@sag@sbox[s]{\sag@br}{#1}{\hyperlink{sag@blk:\sag@br}{\@sag@tpstyle{#2}}}{}%
-    \@sag@sbox[sd]{\sag@br}{sag@inactive@color}{\hyperlink{sag@blk:\sag@br}{#3}}{}%
+    \@sag@sbox[s]{\sag@br}{#1}{\@sag@tpstyle{#2}}{}%
+    \@sag@sbox[sd]{\sag@br}{sag@inactive@color}{#3}{}%
 }
 
 \def\@sag@build@subblkblob#1#2#3{%
     \ifnum\sag@br>0
-        \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#2}}{text=black}%
+        \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{#2}{text=black}%
     \else% if treated as block:
-        \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#2}}{}%
+        \@sag@sbox[s]{\sag@br @\sag@sr}{#1}{#2}{}%
     \fi
-    \@sag@sbox[sd]{\sag@br @\sag@sr}{sag@inactive@color}{\hyperlink{sag@sub@blk:\sag@br @\sag@sr}{#3}}{}%
+    \@sag@sbox[sd]{\sag@br @\sag@sr}{sag@inactive@color}{#3}{}%
 }
 
 
 % the '0' box:
-\@sag@sbox[s]{\sag@br}{sag@default@color}{\hyperlink{sag@blk:0}{\@sag@tpstyle{None}}}{}%
-\@sag@sbox[sd]{\sag@br}{sag@inactive@color}{\hyperlink{sag@blk:0}{None}}{}%
+\@sag@sbox[s]{\sag@br}{sag@default@color}{\@sag@tpstyle{None}}{}%
+\@sag@sbox[sd]{\sag@br}{sag@inactive@color}{None}{}%
 \appto\sag@@ph{\hypertarget{sag@blk:0}{}}
 
 \newcommand*\@sag@block[2][sag@default@color]{%
@@ -238,7 +257,7 @@
 \def\@sag@@subblock#1#2#3[#4]{%
     \stepcounter{sag@reg@subblock}%
     \expandafter\edef\csname sag@reg@subblock@\sag@br\endcsname{\sag@sr}%
-    \ifnum\sag@br>0%
+    \ifnum\sag@br>0\relax
         \colorlet{color@@\sag@br @\sag@sr}{\sag@shadecolor{#1}}%
     \else% 0 is treated as block
         \colorlet{color@@\sag@br @\sag@sr}{#1}%
@@ -262,13 +281,13 @@
 %% -----------------------------------------------------------------------------
 
 \def\@sag@dopdf#1{%
-    \ifsag@setup@fitpage@
-        \includepdf[pages=-,pagecommand={\thispagestyle{#1}},fitpaper]{\doc.pdf}%
-    \else\ifsag@setup@auto@
-        \includepdf[pages=-,templatesize={\sag@target@w}{\sag@target@h},pagecommand={\thispagestyle{#1}},fitpaper]{\doc.pdf}%
-    \else
-        \includepdf[pages=-,pagecommand={\thispagestyle{#1}}]{\doc.pdf}%
-    \fi\fi
+\ifsag@setup@fitpage@
+    \includepdf[pages=-,pagecommand={\thispagestyle{#1}},fitpaper]{\doc.pdf}%
+\else\ifsag@setup@auto@
+    \includepdf[pages=-,templatesize={\sag@target@w}{\sag@target@h},pagecommand={\thispagestyle{#1}},fitpaper]{\doc.pdf}%
+\else
+    \includepdf[pages=-,pagecommand={\thispagestyle{#1}}]{\doc.pdf}%
+\fi\fi
 }
 
 %% display command - multiple
@@ -312,8 +331,8 @@
 \def\sag@display@slides@withsubs{
 \foreach \sag@cur@blk in {1,...,\sag@br} {%
     \sag@init@block
-    \ifnum\sag@cnt@sub@blk>0
-    \foreach \sag@cur@sub@blk %
+    \ifnum\sag@cnt@sub@blk>0\relax
+    \foreach \sag@cur@sub@blk
             in {1,...,\sag@cnt@sub@blk} {%
         \@sag@display@slides@withsubs
     }%

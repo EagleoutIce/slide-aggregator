@@ -57,9 +57,9 @@
         font=\sag@default@font,minimum height=2.25em,inner xsep=2ex%
     },%
     sag@style@layout/.style={},%
-    sag@style@pgnode/.style={below left=0.25cm,sag@blob=blkclr,minimum width=3.75em},%
-    sag@subnode/.style={below left,yshift=-\sag@pgdist@h,outer sep=0pt,inner sep=0pt,text width=\sag@subnode@factor*\paperwidth,align=flush right},%
-    sag@overviewnode/.style={below right=0.25cm,inner sep=0pt,text width=\sag@overview@factor*\paperwidth,align=flush left}%
+    sag@style@pgnode/.style={below left=.25cm,sag@blob=blkclr,minimum width=3.75em},%
+    sag@subnode/.style={below left,yshift=-\sag@pgdist@h,outer sep=\z@,inner sep=\z@,text width=\sag@subnode@factor*\paperwidth,align=flush right},%
+    sag@overviewnode/.style={below right=.25cm,inner sep=\z@,text width=\sag@overview@factor*\paperwidth,align=flush left}%
 }
 
 \colorlet{sag@default@color}{black}
@@ -99,24 +99,44 @@
 
 % TODO: AUTOMIZE WITH DISPLAY-CALL WHICH SUBHOOK TO TAKE
 \def\sag@@typesetmainasblocks{%
-    \foreach \sag@tmp@i in {1,...,\sag@br} {%
+\foreach \sag@tmp@i in {1,...,\sag@br} {%
+    % only typeset if childs are present
+    \ifnum\@nameuse{sag@reg@subblock@\sag@tmp@i}>0\relax
+        \ifnum\sag@tmp@i=\sag@cur@blk \@sag@ubox[s]{\sag@tmp@i}{}\else \@sag@ubox[sd]{\sag@tmp@i}{}\fi
+        \strut\space
+    \fi%
+}%
+}
+
+\def\sag@@typesetmainassubblocks{
+    \foreach \sag@tmp@i in {1,...,\sag@sr} {%
         % only typeset if childs are present
-        \ifnum\@nameuse{sag@reg@subblock@\sag@tmp@i}>0\relax
-            \ifnum\sag@tmp@i=\sag@cur@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
-            \@sag@ubox[\sag@tmp]{\sag@tmp@i}{}\space
-        \fi%
+        \ifnum\sag@tmp@i=\sag@cur@sub@blk \@sag@ubox[s]{0@\sag@tmp@i}{sub@}\else \@sag@ubox[sd]{0@\sag@tmp@i}{sub@}\fi
+        \strut\space
     }%
 }
 
-\def\sag@@typesetmainassubblocks{%
+\def\sag@@typesetmainasblocks@short{%
+\foreach \sag@tmp@i in {1,...,\sag@br} {%
+    % only typeset if childs are present
+    \ifnum\@nameuse{sag@reg@subblock@\sag@tmp@i}>0\relax
+        \ifnum\sag@tmp@i=\sag@cur@blk \@sag@uboxs[s]{\sag@tmp@i}{}\else \@sag@uboxs[sd]{\sag@tmp@i}{}\fi
+        \space
+    \fi%
+}%
+}
+
+\def\sag@@typesetmainassubblocks@short{
     \foreach \sag@tmp@i in {1,...,\sag@sr} {%
         % only typeset if childs are present
-        \ifnum\sag@tmp@i=\sag@cur@sub@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
-        \@sag@ubox[\sag@tmp]{0@\sag@tmp@i}{sub@}\space
+        \ifnum\sag@tmp@i=\sag@cur@sub@blk \@sag@uboxs[s]{0@\sag@tmp@i}{sub@}\else \@sag@uboxs[sd]{0@\sag@tmp@i}{sub@}\fi
+        \space
     }%
 }
 
 \let\sag@typesetmainblocks\sag@@typesetmainasblocks
+\let\sag@typesetmainblocks@short\sag@@typesetmainasblocks@short
+
 
 \def\sag@start@block{%
 \sag@@pgmarker\sag@@pgblob% don't pull out, it may change if on hooks
@@ -136,16 +156,16 @@
 % there has to be at least one as assured by main loop
 \def\sag@typesetsubblocks{%
     \foreach \sag@tmp@i in {1,...,\sag@cnt@sub@blk} {%
-        \ifnum\sag@tmp@i=\sag@cur@sub@blk \def\sag@tmp{s}\else \def\sag@tmp{sd}\fi
-        \@sag@ubox[\sag@tmp]{\sag@cur@blk @\sag@tmp@i}{sub@}\space%
+        \ifnum\sag@tmp@i=\sag@cur@sub@blk \@sag@ubox[s]{\sag@cur@blk @\sag@tmp@i}{sub@}\else \@sag@ubox[sd]{\sag@cur@blk @\sag@tmp@i}{sub@}\fi
+        \strut\space
     }%
 }
 
 \def\sag@@place@subnode{\node[sag@subnode] at (tp.south east) {\sag@typesetsubblocks};}
 \let\sag@place@subnode\sag@@place@subnode
 
-\def\sag@@currentblock{\node[below left,xshift=-\sag@pgdist@w,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{\sag@cur@blk}{}};}
-\def\sag@@currentsubblock{\node[below left,xshift=-\sag@pgdist@w,inner sep=0pt] at(tp.north west) {\@sag@ubox[s]{0@\sag@cur@sub@blk}{sub@}};}
+\def\sag@@currentblock{\node[below left,xshift=-\sag@pgdist@w,inner sep=\z@] at(tp.north west) {\@sag@ubox[s]{\sag@cur@blk}{}};}
+\def\sag@@currentsubblock{\node[below left,xshift=-\sag@pgdist@w,inner sep=\z@] at(tp.north west) {\@sag@ubox[s]{0@\sag@cur@sub@blk}{sub@}};}
 \let\sag@currentblob\sag@@currentblock
 
 \def\sag@inblock@plain{%
@@ -160,7 +180,7 @@
   \sag@currentblob
   \sag@place@subnode
   \sag@@commentblob
-  \node[sag@overviewnode,scale=0.5] (on) at (current page.north west) {\sag@typesetmainblocks\endgraf};
+  \node[sag@overviewnode,opacity=.65] (on) at (current page.north west) {\sag@typesetmainblocks@short\endgraf};
 }
 
 \ifsag@setup@runningtoc@
@@ -210,13 +230,13 @@
 
 \def\@sag@sbox[#1]#2#3#4#5{%
     \expandafter\newsavebox\csname sag@#1@#2\endcsname
-    \expandafter\savebox\csname sag@#1@#2\endcsname{%
-        \tikz{\node [sag@blob=#3,#5] {#4};}%
-    }%
+    \expandafter\savebox\csname sag@#1@#2\endcsname{\tikz{\node[sag@blob=#3,#5] {#4};}}%
 }
 
 % ['s' or 'sd'] #2 is marker 'sub @ main', #3 is prefix
-\def\@sag@ubox[#1]#2#3{\strut\hyperlink{sag@#3blk:#2}{\expandafter\usebox\csname sag@#1@#2\endcsname}}
+\def\@sag@ubox[#1]#2#3{\hyperlink{sag@#3blk:#2}{\expandafter\usebox\csname sag@#1@#2\endcsname}}
+% s => inner scale
+\def\@sag@uboxs[#1]#2#3{\hyperlink{sag@#3blk:#2}{\scalebox{.45}{\expandafter\usebox\csname sag@#1@#2\endcsname}}}
 
 \def\@sag@build@blkblob#1#2#3{%
     \@sag@sbox[s]{\sag@br}{#1}{\@sag@tpstyle{#2}}{}%
@@ -348,6 +368,7 @@
     \let\sag@place@subnode\relax% no subnodes as no hiearchy to place
     \let\sag@currentblob\sag@@currentsubblock% current is always sub never none
     \let\sag@typesetmainblocks\sag@@typesetmainassubblocks% mains are subs!
+    \let\sag@typesetmainblocks@short\sag@@typesetmainassubblocks@short
     \foreach \sag@cur@sub@blk in {1,...,\sag@cnt@sub@blk} {%
         \@sag@display@slides@onlysubs
     }%

@@ -314,7 +314,7 @@
 %% --------
 
 \def\sag@majorsl{\@sag@atblockinit@true
-\appto\sag@@ph{\global\@sag@atblockinit@false}}
+\g@addto@macro\sag@@ph{\global\@sag@atblockinit@false}}
 
 \def\sag@init@block{%
     \protected@edef\blktag{\@nameuse{name@\sag@cur@blk}}%

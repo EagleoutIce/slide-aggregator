@@ -24,6 +24,12 @@
 \newif\ifsag@setup@runningtoc@
 \DeclareOption{runningtoc}{\sag@setup@runningtoc@true}
 \DeclareOption{norunningtoc}{\sag@setup@runningtoc@false}
+
+\DeclareOption{halosub}{\def\sag@halosub{.85}}
+\DeclareOption{nohalosub}{\def\sag@halosub{1}}
+
+\def\sag@halosub{1}
+
 \ProcessOptions*
 
 %% Packages
@@ -58,7 +64,7 @@
     },%
     sag@style@layout/.style={},%
     sag@style@pgnode/.style={below left=.25cm,sag@blob=blkclr,minimum width=3.75em},%
-    sag@subnode/.style={below left,yshift=-\sag@pgdist@h,outer sep=\z@,inner sep=\z@,text width=\sag@subnode@factor*\paperwidth,align=flush right},%
+    sag@subnode/.style={below left,yshift=-\sag@pgdist@h,outer sep=\z@,inner sep=\z@,opacity=\sag@halosub,text width=\sag@subnode@factor*\paperwidth,align=flush right},%
     sag@overviewnode/.style={below right=.25cm,inner sep=\z@,text width=\sag@overview@factor*\paperwidth,align=flush left}%
 }
 
@@ -84,7 +90,7 @@
     \ifcsname sag@pagehook@\thepage\endcsname
         \@nameuse{sag@pagehook@\thepage}\par
     \fi
-    \ifcsname sag@pagenote@\thepage\endcsname%
+    \ifcsname sag@pagenote@\thepage\endcsname
         \sag@commentname\space
         \@nameuse{sag@pagenote@\thepage}%
     \fi};

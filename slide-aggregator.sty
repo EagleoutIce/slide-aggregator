@@ -1,18 +1,10 @@
 %% slide-aggregator.sty
-%%
-%% --------------------------------------------------------------------------
-%%
 %% Autor: Florian Sihler, 22.02.2021 (& 23.)
-%%
 %% Package to collect (probably lecture-)slides
-
 % All internal commands are prefixed by 'sag'
-
 \ProvidesPackage{slide-aggregator}[2021/02/23 v1.0 a slide aggregator package]
 
 %% Options
-%% --------
-
 \newif\ifsag@setup@fitpage@
 \DeclareOption{fitpage}{\sag@setup@fitpage@true\sag@setup@auto@false}
 \DeclareOption{nofitpage}{\sag@setup@fitpage@false}
@@ -29,19 +21,14 @@
 \DeclareOption{nohalosub}{\def\sag@halosub{1}}
 
 \def\sag@halosub{1}
-
 \ProcessOptions*
 
 %% Packages
-%% --------
-
 \RequirePackage{hyperref}
 \RequirePackage{afterpage,scrlayer-scrpage,etoolbox,bookmark,pdfpages,tikz}
 
 
 %% Styles for markers and base registers
-%% --------
-
 \ifsag@setup@auto@
 \newlength\sag@target@w
 \newlength\sag@target@h
@@ -78,8 +65,6 @@
 \newif\if@sag@atblockinit@
 
 %% Comment-Node
-%% --------
-
 \colorlet{sag@comment}{white!85!black}
 \def\sag@commentname{\textit{Notiz:}}
 
@@ -88,19 +73,17 @@
     text width=8.5cm,fill opacity=.65,text opacity=1,#1] (hkn)
     at (current page.south east) {% if (hook); (present(note)) => enote
     \ifcsname sag@pagehook@\thepage\endcsname
-        \@nameuse{sag@pagehook@\thepage}\par
+        \csname sag@pagehook@\thepage\endcsname
     \fi
     \ifcsname sag@pagenote@\thepage\endcsname
         \sag@commentname\space
-        \@nameuse{sag@pagenote@\thepage}%
+        \csname sag@pagenote@\thepage\endcsname
     \fi};
 }
 
 \def\sag@comment@node{\protected@edef\@sag@tmp{\noexpand\@sag@comment@node{\@nameuse{sag@ceop@\thepage}}}\@sag@tmp}
 
 %% headings
-%% --------
-
 % hierarchy: 'block|subblock'
 
 % TODO: AUTOMIZE WITH DISPLAY-CALL WHICH SUBHOOK TO TAKE
@@ -108,7 +91,7 @@
 \foreach \sag@tmp@i in {1,...,\sag@br} {%
     % only typeset if childs are present
     \ifnum\@nameuse{sag@reg@subblock@\sag@tmp@i}>0\relax
-        \ifnum\sag@tmp@i=\sag@cur@blk \@sag@ubox[s]{\sag@tmp@i}{}\else \@sag@ubox[sd]{\sag@tmp@i}{}\fi
+        \ifnum\sag@tmp@i=\sag@cur@blk\relax \@sag@ubox[s]{\sag@tmp@i}{}\else \@sag@ubox[sd]{\sag@tmp@i}{}\fi
         \strut\space
     \fi%
 }%
@@ -204,8 +187,6 @@
 \end{tikzpicture}}}
 
 %% hooks
-%% --------
-
 \def\@sag@appto@list#1#2{%
     \ifcsname #1\endcsname
     \def\@tempa{#2}\ifx\@tempa\@empty\else
@@ -223,14 +204,10 @@
 }
 
 %% links
-%% --------
-
 \def\refslide#1{\textbf{\color{clr}\hyperlink{sag@pg:#1}{#1}}}
 \def\reflink#1#2{\textbf{\color{clr}\href{#1}{#2}}}
 
 %% block hooks
-%% --------
-
 % every hook will precreate its corresponding savebox
 % this should be fine
 
@@ -304,8 +281,6 @@
 \let\addslide\@sag@subblock
 
 %% display command - both
-%% --------
-
 \def\@sag@dopdf#1{%
 \ifsag@setup@fitpage@
     \includepdf[pages=-,pagecommand={\thispagestyle{#1}},fitpaper]{\doc.pdf}%
@@ -317,8 +292,6 @@
 }
 
 %% display command - multiple
-%% --------
-
 \def\sag@majorsl{\@sag@atblockinit@true
 \g@addto@macro\sag@@ph{\global\@sag@atblockinit@false}}
 
@@ -366,8 +339,6 @@
 }}
 
 %% display command - single
-%% --------
-
 \def\sag@display@slides@onlysubs{%
     \edef\sag@cur@blk{0}%
     \protected@edef\sag@cnt@sub@blk{\sag@sr}%
@@ -392,16 +363,10 @@
 
 
 %% display command - main
-%% --------
-
 \def\displayslides{%
 \begingroup
-\ifnum\value{sag@reg@block}=0%
-\sag@display@slides@onlysubs
-\else
-\sag@display@slides@withsubs
-\fi
-\endgroup
-}
-
+\ifnum\value{sag@reg@block}=0\relax
+\sag@display@slides@onlysubs\else
+\sag@display@slides@withsubs\fi
+\endgroup}
 \endinput
